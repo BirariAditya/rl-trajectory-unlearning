@@ -1,0 +1,213 @@
+# Implementation plan: trajectory deletion in offline reinforcement learning
+
+Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.md) and three [specialist audits](audits/). The existing tabular code is a **baseline scaffold**, not yet the proposed paper contribution. The flagship hypothesis is a deletion-sensitive policy certificate whose *complete* request cost can be local under stated graph and action-margin conditions. A fixed-feature LSPI-control update is a second, independently testable hypothesis. GPU IQL experiments test transfer; they do not inherit a tabular certificate. Count subtraction, prioritized sweeping, warm starts, global Bellman residuals, action-gap tests, linear-matrix downdates, and adaptive fallback are established components, not stand-alone novelty claims.
+
+### Research order and claim gates
+
+Live implementation status and validation evidence are maintained in [PROGRESS.md](PROGRESS.md). The baseline harness, exact small-MDP oracle, and ordinary prioritized-sweeping comparator are now implemented; the sparse certificate and LSPI-control modules remain staged work.
+
+| Track | Proposed claim | Gate before expanding |
+| --- | --- | --- |
+| A: finite empirical MDP | Equality of the *deployed policy* to a specified retained-only learner, with deletion-dependent certificate/work bound in favorable cases | Prove a sparse verification procedure without an uncounted full scan; beat warm-start planning in total latency; exhibit hard global cases |
+| B: frozen-feature LSPI control | Exact replay of a declared retained-only LSPI schedule, including changes to policy-dependent targets | Verify the normal-matrix identity after a policy switch; prove conditioning/numerical requirements and a useful switch-rank/work bound |
+| C: neural offline RL | Empirical retraining-relative fidelity and retained utility at a measured compute budget | Beat strong fine-tuning on a nontrivial split, with multiple retrains, attacks, tasks, and fully charged GPU/preprocessing cost |
+
+These are hypotheses, not results. If Track A's certificate still scans the whole state-action graph or matches old sensitivity results, pivot to Track B or a rigorously characterized failure-mode paper by week 4. Do not spend the GPU budget to compensate for a missing algorithmic claim.
+
+## 1. Define the estimand before coding
+
+Let `D` be a fixed collection of complete trajectories, each with a unique trajectory ID. A later data schema may add a user ID for block deletion. A deletion request names whole trajectory IDs. We initially exclude partial-trajectory deletion, nonstationary data, and changes to the environment itself. Split `D = D_retain ∪ D_forget` before running any unlearning method.
+
+Define a deterministic learner `A` as follows:
+
+1. Build a discounted empirical MDP from `D` using a fixed convention for unseen state-action rows in every run.
+2. Solve for the optimal action values with a declared convergence tolerance or an exact small-MDP reference solver.
+3. Return a greedy policy with a fixed action order for ties.
+
+The counterfactual target is `π_ref = A(D_retain)`. It is a *specific learner on a specific retained dataset*, not an unknowable environment-optimal policy. The method receives the full-data learner state and deletion IDs and produces `π_U`. The primary questions are whether `π_U` agrees with `π_ref`, retains value, and costs less than rebuilding and solving from scratch.
+
+**Claim boundary:** equality of the deployed deterministic policy to `π_ref` is a behavioral result for this learner. It does not imply that the critic, caches, parameters, or output distribution are indistinguishable from a fresh training run. If these objects are released, evaluate them separately.
+
+## 2. Repository and API contract
+
+Keep manuscripts and code separate. The planned layout is:
+
+```text
+Research/
+  literature_review.md
+  implementation_plan.md
+  novelty_reassessment.md
+  audits/                 # dated primary-source and theorem-risk notes
+  src/
+    rl_unlearning/
+      __init__.py
+      data.py              # Transition, Trajectory, validation and splits
+      tabular.py           # additive empirical-MDP statistics and subtraction
+      planner.py           # reference tabular planning
+      unlearning.py        # local repair, certificate, fallback
+      # staged additions: baselines.py, experiments.py, metrics.py,
+      # sparse_certificate.py, fixed_features.py, lspi_control.py, deep/
+  tests/
+    test_tabular.py         # initial end-to-end and model tests
+    # staged additions: test_planning.py, test_sparse_certificate.py,
+    # test_lspi_control.py, etc.
+  scripts/
+    run_tabular_demo.py
+  # staged additions: configs/, results/, packaging metadata
+```
+
+Keep the first tabular implementation standard-library-only, with `unittest` and a runnable demo script. Add editable installation, a pinned `pyproject.toml`, NumPy, `pytest`, and config files only when the prototype needs them. The deep phase can add PyTorch, Minari/D4RL compatibility, and task-specific libraries after the tabular gates pass. Record package versions, Git revision, seed, config, deletion IDs, and device in every experiment result file.
+
+Core interfaces, which may be adjusted as implementation reveals constraints:
+
+```python
+data.Transition, data.Trajectory
+tabular.EmpiricalMDP(states, actions, gamma, trajectories)
+model.delete_trajectories(trajectory_ids) -> changed state-action rows
+planner.value_iteration(model, tolerance, max_sweeps, initial_q) -> PlanResult
+planner.bellman_residual(model, q_values) -> float
+unlearning.delete_and_repair(model, old_q, trajectory_ids, budget) -> RepairResult
+# staged: metrics.evaluate(result, retained_reference, environment, counter)
+```
+
+The first `EmpiricalMDP` stores the full-data empirical statistics and active trajectories; the planner output is passed separately to deletion and repair. The deletion routine rejects unknown or already-deleted IDs. It mutates its model argument, so experiments must create an independent model for each method. All methods receive exactly the same retained dataset and evaluation states. Mark the current package as **implemented prototype**; every proposed new module above is staged work, not existing code.
+
+## 3. Data and empirical-model rules
+
+A transition stores `(state, action, reward, next_state)`, where `next_state=None` means termination and has zero continuation value. A trajectory stores an ordered sequence of transitions and a unique ID. Time-limit truncation has no representation in this first schema; reject or preprocess truncated episodes with a declared bootstrap convention before importing them. This avoids silently treating a timeout as a zero-value terminal.
+
+For each trajectory `τ`, store or recover additive statistics `N_τ(s,a,s')`, `N_τ(s,a)`, and `R_τ(s,a)`. Rewards are modeled by their mean conditional on `(s,a)`; if a task needs transition-dependent mean rewards, extend the sufficient statistics to `R_τ(s,a,s')` and keep that choice fixed throughout all methods. Use integer counts and Python binary64 floating rewards.
+
+The first learner uses empirical frequencies for observed rows:
+
+```text
+P_D(s'|s,a) = N_D(s,a,s') / N_D(s,a)
+r_D(s,a)   = R_D(s,a) / N_D(s,a).
+```
+
+When `N_D(s,a)=0`, that row has reward zero and terminates with probability one. This convention remains fixed after deletion. Use `0 ≤ γ < 1` and a stable action order. Record `γ`, the empty-row convention, and the planner stopping rule in the experiment manifest. A smoothed model is a possible later alternative learner, but introducing a prior would require rebuilding all references under the same rule. The first implementation retains trajectories in the model so subtraction removes their contributions exactly. Numerical equality should be checked within a declared binary64 tolerance against rebuilding the model from `D_retain`; do not assert bitwise equality for floating reward sums.
+
+## 4. Staged implementation and acceptance gates
+
+**Current status:** Phases 0–3 have an initial implementation in `src/rl_unlearning` and basic tests. Their publication-grade property testing, independent reference, timing ledger, and adversarial checks remain to do. A passing prototype test is not completion of the research gates below.
+
+### Phase 0 — Baseline scaffold and a tiny known MDP
+
+Create the standard-library package, a runnable demo, and a 3–5-state hand-computable MDP. Generate a fixed logged dataset with trajectory IDs. Define the output object as `policy + optional diagnostics`; decide separately which diagnostics are part of a published release. Add a seed manifest before running sweep experiments.
+
+**Gate:** one command builds the empirical MDP, prints its transition rows, solves it, and reproduces the same policy from the same inputs. The hand-computed action values agree within the stated planner tolerance.
+
+### Phase 1 — Counterfactual retraining and exact data subtraction
+
+Implement data validation, additive contributions, model construction, and rebuild-from-retain. For every test deletion set, compare a fresh model built from `D` and then mutated by `delete_trajectories(F)` with a model built directly from `D_retain`, checking counts, transition probabilities, rewards, and terminal handling. Run a converged reference planner on each retained model. Deleting zero IDs must leave the original model and policy unchanged.
+
+**Gate:** property tests over random small MDP logs and deletion subsets pass; sequential deletion `F₁` then `F₂` matches deleting `F₁ ∪ F₂` once. Check the aggregate count is nonnegative and each transition row sums to one. Save both scratch aggregation time and scratch planning time, because speedup denominators differ.
+
+### Phase 2 — Local Bellman repair
+
+After subtraction, enqueue every changed `(s,a)` row. Maintain predecessor actions for all transition edges with nonzero probability under the **retained** model, including actions that are currently non-greedy. Recompute a row's Bellman target, update its Q entry, and enqueue predecessors when the change can alter their targets. Use a priority queue keyed by residual magnitude, with lazy stale-entry handling. Avoid assuming that a small changed row affects only nearby *states*: discounted influence can travel through cycles and bottlenecks.
+
+For the first version, a global Bellman residual scan after a bounded batch is acceptable and must be counted in runtime. Optimize residual maintenance only after correctness is established. Expose a work budget (`max_backups`, `max_seconds`, or both) and deterministic fallback to a full warm-started planner if repair does not meet the certificate.
+
+**Gate:** on random sparse and dense MDPs, local repair plus fallback returns a policy that agrees with the retained reference whenever the certificate reports success. Add a regression case in which deleting data makes a previously non-greedy action optimal; predecessor propagation through that action is mandatory.
+
+### Phase 3 — Behavioral certificate and adaptive decision
+
+For retained-model Bellman operator `T_R`, compute the global residual `η = ||T_R Q_U - Q_U||∞`. Contraction yields the conservative error radius `ε_Q = η/(1-γ)` around the retained-model optimal Q-function. At state `s`, if the gap between the top two Q values under `Q_U` is **strictly greater** than `2 ε_Q`, the greedy action there matches the unique retained-model optimal action. Report a Boolean mask of certified states, the maximum residual, minimum gap, and every failed state's reason. All states used by the deployed policy must pass for a full-policy equality claim.
+
+Handle zero/tiny action gaps carefully: a failed gap test is *inconclusive*, not evidence that the policy is wrong. For finite tabular MDPs, fallback may use a more accurate planner and, if needed, an independent reference policy-iteration check under fixed tie-breaking. A finite-tolerance planner alone cannot certify equality at exact ties without extra care. The certificate compares against the optimal policy of the retained empirical model; describe any separate numerical tolerance in the reported result.
+
+**Gate:** no false certificates on exhaustive small-MDP tests and randomized adversarial tests within numerical tolerance. Measure the cost of residual scans, graph construction, queue operations, and fallback. Produce at least one example where repair is cheap and one where a one-trajectory deletion forces broad recomputation.
+
+### Phase 3A — The new sparse-certificate research gate
+
+Treat Phase 3's global residual/action-gap certificate as an **independent oracle** for testing, not as the intended main theorem. Let `C` denote changed empirical state-action rows. Develop a sound bound on their effect on action choices that accounts for direct row shocks, discounted reachability, and the pre-deletion action margins. Test the special case where only non-policy rows change: the old policy's value is unchanged, so an exact changed-row advantage check may certify it without rescanning all rows. For changed policy rows, use a rigorously bounded influence envelope or a certified policy-value correction, and prove which states/actions can be skipped. Analyze terminal rows, transition edges added or removed by deletion, exact ties, and finite-precision errors.
+
+Instrument **all** work: reverse index build/update, model subtraction, envelope propagation or linear solves, every checked action, numerical certification, fallback, and output materialization. A per-request complexity claim must specify preprocessing and stored memory; a fresh `O(SA)` scan is not local work. Compare with plain prioritized sweeping plus its check and warm-started complete policy/value iteration. Construct a bottleneck chain and a near-tie family where global propagation is necessary. Search sensitivity and dynamic-MDP prior art before naming the theorem.
+
+**Gate by week 4:** a written theorem statement and proof outline, exhaustive small-MDP counterexample search, and at least one instance class with a valid sublinear **verification** cost after stated preprocessing. If the bound is loose or every request still scans globally, stop making the certified-locality claim and pivot to Phase 5's LSPI-control work or a failure-mode study.
+
+### Phase 4 — Deletion difficulty, adversarial cases, and ablation study
+
+Generate chain, branching chain, grid/bottleneck, and dense random MDPs. Predefine deletion strata: uniform random; rare-state coverage; high reward contribution; bridge/bottleneck; high versus low retain/forget visitation overlap; and sequential 1%, 5%, 10%, 20% deletions. Add shared-state deletion where suppressing forget values would **over-forget**, and camouflage/retained-backdoor deletion inspired by [UBA-ORL](https://arxiv.org/abs/2609.22711). Record the predecessor subgraph size, changed empirical rows, action-gap distribution, coverage loss, and any triggered safety failure before comparing algorithms. Counterfactual fidelity and safety must be reported separately: the retained-only reference itself may reveal a retained backdoor.
+
+Run these baselines:
+
+1. scratch rebuild plus scratch planning (the reference and time denominator);
+2. no operation;
+3. full planning warm-started from the original Q;
+4. local prioritized sweeping without a certificate or adaptive fallback;
+5. existing global-residual certified repair with fallback;
+6. proposed sparse certificate/repair, with and without its fallback.
+
+Retained-data fine-tuning and negative-gradient/refit are meaningful mainly once a parameterized learner exists; include them in fixed-feature/deep experiments, not as artificial tabular-model comparisons. TrajDeleter is a direct deep/offline trajectory baseline and belongs in the deep phase if its code and training setup can be aligned.
+
+**Gate by week 6:** at least three independent dataset seeds and several deletion requests per stratum in pilots; increase seeds for final figures. Plots show *total* wall-clock and complete work against retraining-relative policy agreement and return. Report fallback frequency, verification overhead, index memory, amortization across repeated requests, and worst-case strata rather than only average speedup. The proposed method must improve on warm-started full planning in at least one preregistered regime and detect its hard cases.
+
+### Phase 5 — Frozen-feature evaluation, then LSPI control
+
+Start with *fixed-policy evaluation* as a correctness check. Given fixed features `φ` and a fixed evaluation policy, accumulate per-trajectory contributions to
+
+```text
+A = Σ_i φ_i (φ_i - γ φ'_i)^T + λI,     b = Σ_i φ_i r_i.
+```
+
+Delete contributions, solve `A_retain w = b_retain`, and compare to a full retained-data rebuild and solve. Test rank downdates only after conditioning checks; fall back to a fresh factorization when the matrix is ill-conditioned or the update is large. Record condition number, coefficient error, evaluation-value error, time, and memory.
+
+The potential contribution is **control**, where a changed policy changes the next-action feature in retained transitions. For an LSPI policy `π`, define `G_R(z)=Σ_{i∈R:s'_i=z}φ_i`. In its normal matrix, a changed next action at successor state `z` contributes the rank-one target correction
+
+```text
+−γ G_R(z) [φ(z,π_new(z)) − φ(z,π_old(z))]ᵀ.
+```
+
+This correction is in addition to subtracting deleted samples. Fix an LSPI initialization, iteration count or deterministic stopping rule, feature map, regularizer, solver, and tie order. Compare every post-deletion policy-iteration step against a scratch retained-only implementation, especially after a policy switch. Do not assume regularization makes nonsymmetric LSTD matrices invertible; check conditioning and use a fresh factorization on failure. A frozen random feature map or encoder trained only on public/non-deletable data is required for a head-only exactness claim. Store successor aggregates and index cost; compare against LSPI's own incremental matrix-update baseline, not only naive scratch refitting.
+
+**Gate by week 8:** fixed-policy deleted-data coefficients match retained-only recomputation, and the policy-switch control case matches a full retained-only LSPI replay at every declared iteration. A useful cost theorem must involve the number of deleted samples and changed successor states, include aggregate maintenance and factorization work, and show a regime faster than strong incremental LSPI. If only fixed-policy evaluation works, keep it as a baseline and do not call it the main result.
+
+### Phase 6 — GPU offline-RL transfer pilot
+
+Choose one algorithm family first: IQL with a validated implementation, one original D4RL-v2 snapshot, and an environment/deletion slice where no-op and retained-only retraining are measurably different. [Minari's D4RL page](https://minari.farama.org/datasets/D4RL/index.html) states that some releases are reproductions, so label Minari as a separate dataset track rather than treating it as the same log. HalfCheetah medium-expert is a pilot candidate, subject to our own signal check. Freeze dataset hash, episode parsing and timeout handling, preprocessing, architecture, training steps, checkpoint selection, seeds, and deletion IDs. Split by complete episode before training. Train the original model and multiple independent scratch retained-data references on GPU.
+
+Build the strong baselines first: no-op, scratch retrain, budget-matched uniform retained-only fine-tuning, warm-started full retained update, gradient ascent plus retain refit, and [TrajDeleter](https://www.ndss-symposium.org/wp-content/uploads/2025-126-paper.pdf). Compare our prioritized/adaptive retained-only repair with its own always-local ablation. Add [Relative Fisher Forgetting](https://openreview.net/pdf?id=TidLO0qdp0) only if a comparable diffusion policy is included; do not compare its published numbers with IQL under a different learner. Check the currently inaccessible NeurIPS 2026 **CURe** paper before finalizing deep novelty claims. Use [TOUR](https://arxiv.org/abs/2607.21111)'s matched non-members, multiple attack families, retained-utility anchors, and retraining-relative calibration, adapted explicitly to IQL.
+
+There is no tabular Bellman certificate for a changing neural representation. Train a frozen-feature bridge only with features/normalization that have never seen deletable data; a learned encoder from the full log invalidates a head-only removal guarantee. For full IQL, treat the method as retraining-relative empirical evidence and the stopping rule as a diagnostic, not a proof. Do not call small parameter distance, a membership-attack score, or high retained return proof of exact removal. If the one-task pilot is stable and beats strong fine-tuning at equal compute, expand to HalfCheetah, Hopper, and Walker2D on medium/medium-expert; medium-replay and AntMaze are hard-coverage stress tests. Parallelize independent seeds and retained retrains across available GPUs and keep one source of truth for deletion IDs across methods.
+
+**Gate by week 10:** before scale-up, scratch retrains have reproducible returns and evaluation distinguishes no-op, retraining, and deliberate policy collapse. A three-seed, two-request pilot must demonstrate an advantage over compute-matched fine-tuning on retraining-relative behavior without losing retained return. If not, change the split once under a preregistered rule or narrow the paper to the rigorous learner. Final central deep claims require at least five independent training seeds, multiple fixed deletion requests per stratum, a held-out environment/deletion matrix, and hierarchical uncertainty over seeds and requests. If a baseline cannot be reproduced, state the limitation and preserve its intended objective in the comparison description.
+
+## 5. Metrics and experimental protocol
+
+The primary tabular metric is the fraction of evaluation states on which `π_U(s) != π_ref(s)`, reported both uniformly over all states and weighted by a predefined retained-state visitation distribution. Also report `||Q_U - Q_ref||∞`, discounted value gap under the retained empirical MDP, held-out environment return, certified-state fraction, and **fraction of states/actions actually examined by the sparse certificate**. For stochastic deep policies use action-distribution TV/KL or a task-appropriate action-distance metric. Make state weighting explicit; near-perfect agreement on common states can hide a critical bottleneck error. Report coverage loss, zero-count rows, and unsafe-action/backdoor rate as **separate** outcomes, since retraining fidelity alone does not imply safety.
+
+Efficiency metrics are total wall-clock from deletion request to deployable output, counts of Bellman backups, **all certificate rows/edges/linear-solver operations**, predecessor edges traversed, peak memory, and speedup versus `A(D_retain)` from scratch and warm-started full planning. Include index-building and stored sufficient-statistics costs separately as one-time training overhead, and show the number of deletion requests needed to amortize them. For repeated deletions report cumulative and per-request work. Exclude neither fallback nor required validation from the method's reported time; separately time optional privacy attacks that are common to every method.
+
+Use paired deletion splits: every algorithm runs on the same original dataset and exact retained subset. Include multiple independent dataset-generation seeds and, for neural learners, training seeds. Bootstrap confidence intervals at the **dataset/seed** level rather than treating thousands of correlated states as independent samples. Reserve some environments and deletion strata for final evaluation after algorithm choices are fixed. Report negative cases openly.
+
+Membership inference and trajectory auditing are secondary empirical checks. Use matched non-members and multiple attacks; an attack failing to distinguish membership is not equivalent to a policy matching retraining. Plot privacy/audit outcomes alongside return and reference-relative behavior to expose policy collapse.
+
+## 6. Four-month research phases and decision schedule
+
+| Period | Deliverable | Decision to proceed |
+|---|---|---|
+| Weeks 1–2 | Freeze learner and output contract; verify existing prototype, independent retained reference, timing ledger, and strong planning baselines | Counts and policy reference reproduce; end-to-end latency is measured; changed/nonchanged-policy-row and tie cases work |
+| Weeks 3–4 | Prove or falsify sparse action-certificate theorem; audit dynamic-MDP sensitivity prior art | A valid local verification procedure with no hidden global scan exists in a stated favorable regime, or pivot |
+| Weeks 5–6 | Implement sparse prototype, hard global examples, repeated deletion and coverage/safety strata | Beats warm-start planning in total time in at least one preregistered regime and detects hard deletions |
+| Weeks 7–8 | Implement frozen-feature LSTD baseline and policy-switch-aware LSPI control; prove exact replay under stated conditions | Matrix identity and each LSPI step match independent retained-only replay; switch-rank cost can be stated honestly |
+| Weeks 9–10 | Freeze GPU dataset/learner, multiple scratch retrains, matched controls and attacks; one-task IQL pilot | Nontrivial no-op/retrain separation and advantage over budget-matched fine-tuning, or narrow claims |
+| Weeks 11–13 | Five-seed/multi-task deep matrix only if pilot passes; holdout deletion strata, ablations, safety checks | Effects survive across seeds, tasks and attacks; no omitted compute or encoder contamination |
+| Weeks 14–16 | Final prior-art refresh, theorem review, plots, paper and reproducibility package | Every headline claim has a proof/test/table; failed gates and scope limits are explicit |
+
+Keep GPU spending staged: a small pilot measures training duration and seed variance before a large sweep. Reserve substantial time for scratch retained-data retrains because they define the target; reduce task breadth before reducing reference seeds. Recalculate the matrix after measuring one base run and one retrain on the available GPU; record actual GPU-hours, GPU-seconds per deletion, and peak VRAM. If deep results are unstable by week 10, finish the tabular/fixed-feature contribution and present neural results as a limit rather than scaling an inconclusive sweep.
+
+## 7. Paper claim checklist
+
+- State exactly what is forgotten: trajectory IDs, user blocks, or reward records.
+- State exactly what is returned: policy only, or policy plus critic/metadata.
+- Specify the empirical learner, empty-row convention, terminal handling, tolerance, and tie-breaking; include priors if a smoothed learner is added later.
+- Distinguish equality to the retained-data learner from privacy indistinguishability and environment-optimality.
+- Compare with ordinary prioritized sweeping and warm-started full planning; speedups over scratch alone are insufficient.
+- Include TrajDeleter and TOUR-aware evaluation in the deep phase where comparable; check RFF for diffusion policies and CURe once its paper is accessible.
+- State whether the sparse certificate truly avoids a full graph scan and charge preprocessing, verification, and fallback to latency. Standard global residual bounds and adaptive switching are not novelty claims.
+- Distinguish exact frozen-feature head/control replay from full neural-checkpoint unlearning; document feature and normalization provenance.
+- Keep retraining fidelity, privacy auditing, and deployment safety as different endpoints.
+- Show an MDP in which a single deletion has global influence. No universal sublinear-work claim follows from local repair.
+
