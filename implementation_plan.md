@@ -210,4 +210,3 @@ Keep GPU spending staged: a small pilot measures training duration and seed vari
 - Distinguish exact frozen-feature head/control replay from full neural-checkpoint unlearning; document feature and normalization provenance.
 - Keep retraining fidelity, privacy auditing, and deployment safety as different endpoints.
 - Show an MDP in which a single deletion has global influence. No universal sublinear-work claim follows from local repair.
-
