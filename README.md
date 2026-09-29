@@ -1,8 +1,8 @@
 # RL trajectory unlearning research
 
-**Current stage:** exact local policy-repair checkpoint with cyclic and sequential validation. See [PROGRESS.md](PROGRESS.md) for completed work, test evidence, research gates, and next tasks.
+**Current stage:** [Checkpoint 01 reached](checkpoints/01_exact_local_repair.md): exact local policy repair with cyclic/sequential validation and measured cost limits. See [PROGRESS.md](PROGRESS.md) for the live research stage and next tasks.
 
-This project is located at `C:\Users\adity\Research`. Start with the [literature review](literature_review.md), then the [novelty reassessment](novelty_reassessment.md) and revised [implementation plan](implementation_plan.md). Three dated audits in [audits](audits/) detail direct RL prior art, theorem risks, and the GPU route. The code is currently a small offline tabular **baseline**: learning means trajectory counts followed by empirical-model value iteration, so its retained-data counterfactual is explicit. The proposed sparse certificate and LSPI-control bridge are research tasks, not implemented results.
+This project is located at `C:\Users\adity\Research`. Start with the [literature review](literature_review.md), then the [novelty reassessment](novelty_reassessment.md) and revised [implementation plan](implementation_plan.md). The [audits](audits/) cover prior art, proof contracts, theorem risks, and the GPU route. The implemented learners are explicit offline tabular baselines: empirical-model value iteration and rational exact policy iteration. Structural/pruned exact repair is implemented; the general margin-sensitive theorem and LSPI-control bridge remain research tasks.
 
 Run the first tests from `C:\Users\adity\Research`:
 

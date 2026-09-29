@@ -1,5 +1,7 @@
 # Baseline correctness pilot
 
+Latest milestone: [exact cyclic local-repair checkpoint](local_checkpoint_summary.md), with [compressed raw results](local_checkpoint.json.gz). Reproduce the summary with `python scripts/summarize_local_checkpoint.py output/benchmarks/local_checkpoint.json.gz`. It includes full-sequence preparation costs and the dense global-influence limit.
+
 The subsequent [scaling summary](scaling_summary.md) and [compressed report](scaling.json.gz) cover repeated 16/64-state sparse/dense experiments. Rebuild that summary with `python scripts/summarize_scaling.py output/benchmarks/scaling.json.gz`. It includes the observed dense-case slowdown; the table below describes only the earlier tiny correctness pilot.
 
 Run date: 2026-09-29. Source revision: `bd37c7927c98494187ed9f20debadc8c2d6e76d4`.

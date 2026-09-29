@@ -14,6 +14,8 @@ Live implementation status and validation evidence are maintained in [PROGRESS.m
 
 These are hypotheses, not results. If Track A's certificate still scans the whole state-action graph or matches old sensitivity results, pivot to Track B or a rigorously characterized failure-mode paper by week 4. Do not spend the GPU budget to compensate for a missing algorithmic claim.
 
+**Checkpoint update:** [Checkpoint 01](checkpoints/01_exact_local_repair.md) establishes exact block repair with chosen-action changes, cycles, sequential requests, and preparation-inclusive comparisons. Safe pruning can exclude provably dominated bridge actions; dense admissible influence remains global. This passes a concrete correctness/measurement gate but leaves the novelty gate open because action elimination and incremental planning are established. Before neural scale-up, add mature SCC/action-elimination baselines and timed anchor-invalidation regimes, then decide whether to strengthen Track A or pivot to Track B.
+
 ## 1. Define the estimand before coding
 
 Let `D` be a fixed collection of complete trajectories, each with a unique trajectory ID. A later data schema may add a user ID for block deletion. A deletion request names whole trajectory IDs. We initially exclude partial-trajectory deletion, nonstationary data, and changes to the environment itself. Split `D = D_retain ∪ D_forget` before running any unlearning method.

@@ -4,7 +4,7 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Current stage
 
-**Phase 3A correctness checkpoint implemented; cyclic sequential benchmark in progress.** Exact block repair now supports chosen-action changes and cycles, with optional certified action pruning and explicit anchor-invalidation fallback. Proof notes and 36 passing tests establish the implementation contract. The broad deletion-specific novelty theorem, LSPI-control bridge, and neural experiments remain open.
+**Checkpoint 01 reached: exact local tabular repair, cyclic/sequential validation, and full cost comparison complete.** Read [the checkpoint report](checkpoints/01_exact_local_repair.md). Chosen actions can change; optional certified action pruning can reduce the dependency block; anchor invalidation triggers full repair. The scientific novelty gate remains open. The general margin-sensitive theorem, LSPI-control bridge, and GPU experiments remain future work.
 
 ## Stage tracker
 
@@ -13,7 +13,7 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Literature and novelty audit | Initial review complete | `literature_review.md`, `novelty_reassessment.md`, three `audits/` notes; CURe full text remains unresolved |
 | Tabular data subtraction and planning | Implemented and tested | Retained-only rebuild comparisons, empty rows, repeated requests, ties, non-greedy predecessor regression |
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
-| Baselines and cost ledger | Tiny pilot and first scaling pilot complete | 75 tiny runs; 180 timed + 60 memory-pass scaling runs; zero updating-policy/convergence failures; cyclic/sequential and policy-iteration comparisons remain |
+| Baselines and cost ledger | Tiny, scaling, and cyclic sequential checkpoints complete | 75 tiny runs; 180 timed + 60 memory-pass scaling runs; 810 cyclic checkpoint executions; mature SCC-aware comparisons remain |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
 | Frozen-feature LSPI control | Not started | Validate policy-dependent target corrections against retained-only replay |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
@@ -22,7 +22,9 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 ## Latest validation
 
 - **36 tests passed** after adding exact block policy iteration and certified action pruning. Forty random cyclic datasets × four deletions each match exact retained policies and values under enumeration. Deterministic tests cover restored admissible edges, anchor invalidation, and solver failure without mutation. [Proof and publication boundary](audits/local_repair_proof.md).
-- A three-regime cyclic smoke run passed. The full sequential checkpoint matrix is next; conclusions will be added after it finishes.
+- **Full cyclic checkpoint completed:** 54 runs, 162 sequential deletion requests, **810 method executions**, zero failures. Exact local/pruned and warm policy iteration match scratch rational policies and values; binary64 warm VI matches policies in these cases. [Results](output/benchmarks/local_checkpoint_summary.md), [raw report](output/benchmarks/local_checkpoint.json.gz).
+- Source `70f13773b8e467e99cb429115cc2b437c008708e` was clean at execution. [CI run 36603869847](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/36603869847) passed 36 tests and tiny/scaling/cyclic smoke experiments.
+- Constructed 16-state dominated-bridge case: pruned block size **4 versus 16**; median request **0.448 ms versus 9.847 ms** for warm exact PI. Preparation plus four requests: **12.502 ms versus 46.365 ms**. Dense influence still selects 16 states; full-sequence pruned cost **47.962 ms versus 42.633 ms**, so no universal benefit is claimed.
 
 - Current suite: **26 tests passed**, including more than 100 accepted random deletion requests checked against exact retained-policy enumeration, generated-episode validation, memory-pass checks, and a 32-state case inspecting one affected action. [Special-case proof and contract](audits/nonpolicy_certificate_proof.md).
 - [Scaling summary](output/benchmarks/scaling_summary.md) and [compressed raw report](output/benchmarks/scaling.json.gz): **12 settings**, sparse/dense × 16/64 states × 3 seeds, with 3 randomized-order timing repetitions and a separate memory pass. All 192 updating-method runs across timing/memory passes converged and matched the retained numerical reference. Maximum Q error: `1.67e-10` rounded upward. The reference minimum action gap across these runs was approximately `3.74e-4`.
@@ -40,14 +42,14 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Next implementation tasks
 
-1. Run the complete cyclic sequential matrix and account for preparation, global fallback, action pruning, and rational-versus-binary64 costs.
-2. Compare against SCC-aware/incremental policy iteration and established action-elimination algorithms; current correctness does not establish novelty.
+1. Compare against SCC-aware/incremental policy iteration and established action-elimination algorithms; current correctness and constructed speedups do not establish novelty.
+2. Add weaker bridge rewards, timed anchor invalidation, larger/user-block requests, and larger models; charge anchor refresh and preprocessing.
 3. Tighten the general margin-sensitive influence bound or pivot to fixed-feature LSPI control if the contribution remains standard planning.
 
 ## Limitations and open decisions
 
 - Tiny synthetic results establish correctness checks, not benchmark superiority, novelty, or a deletion-time complexity theorem.
-- The current repair still builds the predecessor index and scans all rows for its certificate. It has no sublinear request-time claim.
+- The legacy `delete_and_repair` baseline rebuilds its predecessor index and scans all rows. The new exact block repair maintains an index and can avoid global verification under its structural/pruning conditions. Its worst case is global, and preparation/anchor invalidation are expensive.
 - Policy equality does not certify deletion of released critic, metadata, optimizer, or neural encoder state.
 - The exact oracle enumerates policies and intentionally refuses more than 4,096 policies. It is validation overhead, not a competitive planning baseline.
 - The restricted no-change certificate remains available. The new block repair handles changed policies but uses rational arithmetic and potentially expensive global preparation. Action elimination is established prior art; this implementation is not a novelty claim. GPU experiments have not run.
@@ -58,7 +60,8 @@ At the end of each implementation session, update this file with the current sta
 
 ## Activity log
 
-- **2026-09-29:** implemented exact block repair, warm full policy iteration, optional bound-certified action pruning, and atomic sequential requests. Added proof notes, 10 new tests, and cyclic checkpoint runner. All 36 tests and the initial smoke run passed; full matrix pending.
+- **2026-09-29:** implemented and pushed exact block repair, warm full policy iteration, optional bound-certified action pruning, and atomic sequential requests. Added proof notes, 10 new tests, and cyclic checkpoint runner. All 36 tests and GitHub CI passed.
+- **2026-09-29:** reached Checkpoint 01 after 810 failure-free cyclic method executions. Archived full preparation-inclusive results, retained dense failure regime, and recorded action-elimination prior art. Novelty remains unproven; checkpoint report specifies next gates.
 
 - **2026-09-29:** implemented and pushed restricted rational certificate and its proof/contract, seven certificate tests, acyclic sparse/dense log generation, repeated timing runner and separate memory passes. All 26 tests passed locally and in GitHub CI.
 - **2026-09-29:** completed scaling pilot, archived verified lossless gzip report (170,750 bytes), and added a reproducible summary script. Kept the raw 4 MB report locally under ignored `results/`. Recorded dense-case slowdown and next gates.
