@@ -1,5 +1,7 @@
 # Baseline correctness pilot
 
+The subsequent [scaling summary](scaling_summary.md) and [compressed report](scaling.json.gz) cover repeated 16/64-state sparse/dense experiments. Rebuild that summary with `python scripts/summarize_scaling.py output/benchmarks/scaling.json.gz`. It includes the observed dense-case slowdown; the table below describes only the earlier tiny correctness pilot.
+
 Run date: 2026-09-29. Source revision: `bd37c7927c98494187ed9f20debadc8c2d6e76d4`.
 
 [phase1.json](phase1.json) contains five scenarios × three seeds × five methods = 75 runs. All 60 updating runs converged and matched the independent exact retained-policy reference. Maximum Q error was below `5.56e-17`. No-op is an intentional negative control and is not expected to match after behavior-changing deletions.
