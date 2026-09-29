@@ -4,7 +4,7 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
-Live implementation status and validation evidence are maintained in [PROGRESS.md](PROGRESS.md). The baseline harness, exact small-MDP oracle, ordinary prioritized-sweeping comparator, repeated scaling runner, and restricted unchanged-policy-row certificate are implemented. The general sparse influence certificate and LSPI-control modules remain staged work. The [special-case proof](audits/nonpolicy_certificate_proof.md) is a standard Bellman-optimality argument, not completion of the novelty gate.
+Live implementation status and validation evidence are maintained in [PROGRESS.md](PROGRESS.md). Implemented: baseline harness, rational oracle, ordinary sweeping, repeated scaling, restricted no-change certificate, exact backward-closed block repair, optional action pruning, and cyclic sequential comparisons with warm policy iteration. The [block-repair proof](audits/local_repair_proof.md) explicitly treats action elimination as prior art. The general margin-sensitive deletion theorem and LSPI-control bridge remain staged work; the novelty gate is still open.
 
 | Track | Proposed claim | Gate before expanding |
 | --- | --- | --- |

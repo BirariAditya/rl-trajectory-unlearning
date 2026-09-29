@@ -11,3 +11,4 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python scripts/run_baselines.py --seeds 0 --output results/ci.json
       - run: python scripts/run_scaling.py --sizes 16 --seeds 0 --repeats 2 --output results/ci-scaling.json
+      - run: python scripts/run_local_checkpoint.py --sizes 8 --seeds 0 --repeats 1 --output results/ci-local.json.gz

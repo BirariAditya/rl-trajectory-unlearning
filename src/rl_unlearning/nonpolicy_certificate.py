@@ -86,13 +86,32 @@ certificate to claim bitwise equivalence to binary64 training.
 
     def try_delete(self, trajectory_ids):
         """Commit a certified request or return inconclusive without mutation."""
+        ids, candidates, transitions_read, copied = self._prepare_deletion(trajectory_ids)
+        checked = 0
+
+        def result(accepted, reason):
+            return CertificateResult(accepted, reason, len(candidates), checked,
+                                     transitions_read, copied, self.policy)
+
+        for (s, a), candidate in candidates.items():
+            if a == self._policy[s] and self._normalized(candidate) != self._normalized(self._rows[(s, a)]):
+                return result(False, "chosen_policy_row_changed")
+        for (s, a), candidate in candidates.items():
+            checked += 1
+            if not self._action_valid(s, a, candidate):
+                return result(False, "changed_action_beats_policy_or_tie_order")
+        self._commit_deletion(ids, candidates)
+        return result(True, "policy_unchanged")
+
+    def _prepare_deletion(self, trajectory_ids):
+        """Copy only touched statistics; all validation precedes mutation."""
         ids = tuple(trajectory_ids)
         if len(ids) != len(set(ids)):
             raise ValueError("duplicate deletion ID")
         if any(identifier not in self._logs for identifier in ids):
             raise KeyError("unknown or already deleted trajectory ID")
         candidates = {}
-        transitions_read = copied = checked = 0
+        transitions_read = copied = 0
         for identifier in ids:
             for t in self._logs[identifier].transitions:
                 row = (t.state, t.action)
@@ -107,17 +126,9 @@ certificate to claim bitwise equivalence to binary64 training.
                 candidates[row] = (count - 1, reward - F(str(t.reward)), successors)
                 transitions_read += 1
 
-        def result(accepted, reason):
-            return CertificateResult(accepted, reason, len(candidates), checked,
-                                     transitions_read, copied, self.policy)
+        return ids, candidates, transitions_read, copied
 
-        for (s, a), candidate in candidates.items():
-            if a == self._policy[s] and self._normalized(candidate) != self._normalized(self._rows[(s, a)]):
-                return result(False, "chosen_policy_row_changed")
-        for (s, a), candidate in candidates.items():
-            checked += 1
-            if not self._action_valid(s, a, candidate):
-                return result(False, "changed_action_beats_policy_or_tie_order")
+    def _commit_deletion(self, ids, candidates):
         for row, candidate in candidates.items():
             if candidate[0]:
                 self._rows[row] = candidate
@@ -125,4 +136,3 @@ certificate to claim bitwise equivalence to binary64 training.
                 self._rows.pop(row, None)
         for identifier in ids:
             del self._logs[identifier]
-        return result(True, "policy_unchanged")

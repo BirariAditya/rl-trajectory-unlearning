@@ -4,7 +4,7 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Current stage
 
-**Broader baseline validation and Phase 3A special-case prototype.** A restricted rational certificate for unchanged chosen-policy rows is implemented, with proof notes and randomized oracle checks. The scaling runner now supports larger acyclic sparse/dense datasets, repeated timings, and separate memory passes. The general sparse-influence theorem, LSPI-control bridge, and neural experiments remain planned research.
+**Phase 3A correctness checkpoint implemented; cyclic sequential benchmark in progress.** Exact block repair now supports chosen-action changes and cycles, with optional certified action pruning and explicit anchor-invalidation fallback. Proof notes and 36 passing tests establish the implementation contract. The broad deletion-specific novelty theorem, LSPI-control bridge, and neural experiments remain open.
 
 ## Stage tracker
 
@@ -14,12 +14,15 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Tabular data subtraction and planning | Implemented and tested | Retained-only rebuild comparisons, empty rows, repeated requests, ties, non-greedy predecessor regression |
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
 | Baselines and cost ledger | Tiny pilot and first scaling pilot complete | 75 tiny runs; 180 timed + 60 memory-pass scaling runs; zero updating-policy/convergence failures; cyclic/sequential and policy-iteration comparisons remain |
-| Sparse decision certificate | Restricted special case implemented | Exact unchanged-policy-row test, tie order, repeated requests, rejection atomicity; general influence envelope remains open |
+| Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
 | Frozen-feature LSPI control | Not started | Validate policy-dependent target corrections against retained-only replay |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
+
+- **36 tests passed** after adding exact block policy iteration and certified action pruning. Forty random cyclic datasets × four deletions each match exact retained policies and values under enumeration. Deterministic tests cover restored admissible edges, anchor invalidation, and solver failure without mutation. [Proof and publication boundary](audits/local_repair_proof.md).
+- A three-regime cyclic smoke run passed. The full sequential checkpoint matrix is next; conclusions will be added after it finishes.
 
 - Current suite: **26 tests passed**, including more than 100 accepted random deletion requests checked against exact retained-policy enumeration, generated-episode validation, memory-pass checks, and a 32-state case inspecting one affected action. [Special-case proof and contract](audits/nonpolicy_certificate_proof.md).
 - [Scaling summary](output/benchmarks/scaling_summary.md) and [compressed raw report](output/benchmarks/scaling.json.gz): **12 settings**, sparse/dense × 16/64 states × 3 seeds, with 3 randomized-order timing repetitions and a separate memory pass. All 192 updating-method runs across timing/memory passes converged and matched the retained numerical reference. Maximum Q error: `1.67e-10` rounded upward. The reference minimum action gap across these runs was approximately `3.74e-4`.
@@ -37,9 +40,9 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Next implementation tasks
 
-1. Add cyclic cases, sequential-request benchmark runs, and warm-start policy iteration before publication-level comparisons. Use the observed dense-graph slowdown as a required failure regime.
-2. Measure restricted certificate preparation amortization and integrate its inconclusive result with a general retained-data solver.
-3. Attempt the general sparse influence envelope and search for counterexamples before claiming the proposed theorem.
+1. Run the complete cyclic sequential matrix and account for preparation, global fallback, action pruning, and rational-versus-binary64 costs.
+2. Compare against SCC-aware/incremental policy iteration and established action-elimination algorithms; current correctness does not establish novelty.
+3. Tighten the general margin-sensitive influence bound or pivot to fixed-feature LSPI control if the contribution remains standard planning.
 
 ## Limitations and open decisions
 
@@ -47,13 +50,15 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 - The current repair still builds the predecessor index and scans all rows for its certificate. It has no sublinear request-time claim.
 - Policy equality does not certify deletion of released critic, metadata, optimizer, or neural encoder state.
 - The exact oracle enumerates policies and intentionally refuses more than 4,096 policies. It is validation overhead, not a competitive planning baseline.
-- The restricted certificate uses a rational empirical model and dense global preparation. It proves only unchanged-policy behavior for accepted requests; the general sparse algorithm and GPU experiments have not run. Conference acceptance is not predicted from prototype tests.
+- The restricted no-change certificate remains available. The new block repair handles changed policies but uses rational arithmetic and potentially expensive global preparation. Action elimination is established prior art; this implementation is not a novelty claim. GPU experiments have not run.
 
 ## Update convention
 
 At the end of each implementation session, update this file with the current stage, actual commands/results, output paths, completed tasks, next tasks, and blockers. Mark a gate complete only when its evidence exists. Keep failed experiments and scope limitations visible. Do not silently upgrade a hypothesis to a result.
 
 ## Activity log
+
+- **2026-09-29:** implemented exact block repair, warm full policy iteration, optional bound-certified action pruning, and atomic sequential requests. Added proof notes, 10 new tests, and cyclic checkpoint runner. All 36 tests and the initial smoke run passed; full matrix pending.
 
 - **2026-09-29:** implemented and pushed restricted rational certificate and its proof/contract, seven certificate tests, acyclic sparse/dense log generation, repeated timing runner and separate memory passes. All 26 tests passed locally and in GitHub CI.
 - **2026-09-29:** completed scaling pilot, archived verified lossless gzip report (170,750 bytes), and added a reproducible summary script. Kept the raw 4 MB report locally under ignored `results/`. Recorded dense-case slowdown and next gates.
