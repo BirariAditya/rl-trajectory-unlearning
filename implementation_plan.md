@@ -4,7 +4,7 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
-Live implementation status and validation evidence are maintained in [PROGRESS.md](PROGRESS.md). The baseline harness, exact small-MDP oracle, and ordinary prioritized-sweeping comparator are now implemented; the sparse certificate and LSPI-control modules remain staged work.
+Live implementation status and validation evidence are maintained in [PROGRESS.md](PROGRESS.md). The baseline harness, exact small-MDP oracle, ordinary prioritized-sweeping comparator, repeated scaling runner, and restricted unchanged-policy-row certificate are implemented. The general sparse influence certificate and LSPI-control modules remain staged work. The [special-case proof](audits/nonpolicy_certificate_proof.md) is a standard Bellman-optimality argument, not completion of the novelty gate.
 
 | Track | Proposed claim | Gate before expanding |
 | --- | --- | --- |

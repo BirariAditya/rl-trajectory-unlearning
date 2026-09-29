@@ -7,7 +7,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from rl_unlearning import EmpiricalMDP, Trajectory, Transition, value_iteration
 from rl_unlearning.baselines import prioritized_sweeping
-from rl_unlearning.experiments import CASES, MeteredMDP, run_case
+from rl_unlearning.experiments import CASES, MeteredMDP, generated_case, run_case, run_dataset
 from rl_unlearning.reference import exact_reference
 
 
@@ -41,6 +41,27 @@ class ReferenceTests(unittest.TestCase):
 
 
 class ExperimentTests(unittest.TestCase):
+    def test_generated_logs_are_complete_and_reproducible(self):
+        for graph in ("sparse", "dense"):
+            case = generated_case(graph, 16, 9)
+            self.assertEqual(case, generated_case(graph, 16, 9))
+            for episode in case[3]:
+                self.assertIsNone(episode.transitions[-1].next_state)
+                for previous, current in zip(episode.transitions, episode.transitions[1:]):
+                    self.assertEqual(previous.next_state, current.state)
+                    self.assertGreater(current.state, previous.state)
+
+    def test_large_reference_and_separate_memory_pass(self):
+        case = generated_case("dense", 16, 4, episodes_per_row=2)
+        timed = run_dataset("dense", 4, *case, order_seed=44)
+        memory = run_dataset("dense", 4, *case, profile_memory=True)
+        self.assertEqual(timed["reference_kind"], "tight_binary64_value_iteration")
+        for record in timed["records"]:
+            self.assertIsNone(record["peak_request_python_bytes"])
+            if record["method"] != "noop":
+                self.assertEqual(record["policy_disagreement"], 0)
+        self.assertTrue(all(r["peak_request_python_bytes"] is not None for r in memory["records"]))
+
     def test_counters_include_verification(self):
         model = MeteredMDP((0,), (0, 1), 0.9,
                            (Trajectory("a", (Transition(0, 0, 1.0),)),))

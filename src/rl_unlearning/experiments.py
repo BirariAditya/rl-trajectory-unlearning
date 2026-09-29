@@ -3,6 +3,7 @@
 from dataclasses import asdict, dataclass
 from time import perf_counter
 import random
+import tracemalloc
 
 from .baselines import prioritized_sweeping
 from .data import Trajectory, Transition
@@ -89,21 +90,49 @@ CASES = ("shared_state", "nonpolicy_row", "bottleneck", "coverage_loss", "tie")
 
 def run_case(name, seed, *, tolerance=1e-10):
     states, actions, gamma, data, forgotten = make_case(name, seed)
+    return run_dataset(name, seed, states, actions, gamma, data, forgotten,
+                       tolerance=tolerance)
+
+
+def run_dataset(name, seed, states, actions, gamma, data, forgotten, *,
+                tolerance=1e-10, order_seed=None, profile_memory=False):
+    """Large cases use a tight VI reference; tiny cases use rational enumeration.
+
+Memory profiling is a separate pass: measured Python allocation excludes the
+already resident model and is not total process RSS or GPU memory.
+"""
+    if profile_memory and tracemalloc.is_tracing():
+        raise ValueError("memory pass requires ownership of tracemalloc")
     started = perf_counter()
     original = MeteredMDP(states, actions, gamma, data)
     old = value_iteration(original, tolerance=tolerance)
     training_seconds = perf_counter() - started
     training_work = asdict(original.work)
     retained = tuple(t for t in data if t.trajectory_id not in forgotten)
-    exact_q, exact_policy = exact_reference(states, actions, gamma, retained)
+    if len(actions) ** len(states) <= 4096:
+        exact_q, exact_policy = exact_reference(states, actions, gamma, retained)
+        reference_kind, reference_residual = "rational_enumeration", 0.0
+    else:
+        reference = value_iteration(EmpiricalMDP(states, actions, gamma, retained),
+                                    tolerance=min(tolerance / 100, 1e-12))
+        exact_q, exact_policy = reference.q, reference.policy
+        reference_kind, reference_residual = "tight_binary64_value_iteration", reference.residual
+    reference_gap = min((sorted((float(exact_q[(s, a)]) for a in actions), reverse=True)[0] -
+                         sorted((float(exact_q[(s, a)]) for a in actions), reverse=True)[1]
+                         for s in states), default=0.0) if len(actions) > 1 else None
     records = []
-    for method in METHODS:
+    methods = list(METHODS)
+    if order_seed is not None:
+        random.Random(order_seed).shuffle(methods)
+    for method in methods:
         started = perf_counter()
         model = MeteredMDP(states, actions, gamma, data) if method not in ("scratch", "noop") else None
         preparation_seconds = perf_counter() - started
         preparation_work = asdict(model.work) if model else asdict(Work())
         if model:
             model.work = Work()
+        if profile_memory:
+            tracemalloc.start()
         started = perf_counter()
         stages = {}
         certified, fallback = None, False
@@ -137,8 +166,13 @@ def run_case(name, seed, *, tolerance=1e-10):
             q, policy, work, converged = result.q, result.policy, model.work, result.residual <= tolerance
             certified, fallback = result.certified_optimal_policy, result.used_full_fallback
         request_seconds = perf_counter() - started
+        peak_bytes = None
+        if profile_memory:
+            _, peak_bytes = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
         # Independent validation is common offline experiment overhead, outside request timing.
         records.append(dict(method=method, request_seconds=request_seconds, stages=stages,
+                            peak_request_python_bytes=peak_bytes,
                             preparation_seconds=preparation_seconds, preparation_work=preparation_work,
                             work=asdict(work), converged=converged,
                             certified_optimal_policy=certified, fallback=fallback,
@@ -149,4 +183,34 @@ def run_case(name, seed, *, tolerance=1e-10):
                 trajectory_ids=[t.trajectory_id for t in data],
                 dataset=[asdict(t) for t in data],
                 original_training_seconds=training_seconds, original_training_work=training_work,
-                exact_reference_policy=exact_policy, records=records)
+                exact_reference_policy=exact_policy, reference_kind=reference_kind,
+                reference_residual=reference_residual, reference_min_action_gap=reference_gap,
+                memory_profiled=profile_memory, records=records)
+
+
+def generated_case(graph, size, seed, *, episodes_per_row=6):
+    """Complete acyclic episodes, sparse next-neighbor or dense forward support.
+
+    Termination is part of this finite episodic process; there are no truncated
+    episodes masquerading as terminal observations. These are synthetic logs.
+    """
+    if graph not in ("sparse", "dense") or size < 2 or episodes_per_row < 2:
+        raise ValueError("valid graph, size >= 2, and episodes_per_row >= 2 required")
+    rng = random.Random(seed)
+    trajectories = []
+    for start in range(size):
+        for first_action in (0, 1):
+            for sample in range(episodes_per_row):
+                s, action, steps = start, first_action, []
+                while True:
+                    reward = round(rng.uniform(-.3, .3) + .15 * action, 4)
+                    if s == size - 1 or rng.random() < .25:
+                        steps.append(Transition(s, action, reward, None))
+                        break
+                    stop = min(size, s + 3) if graph == "sparse" else size
+                    successor = rng.randrange(s + 1, stop)
+                    steps.append(Transition(s, action, reward, successor))
+                    s, action = successor, rng.randrange(2)
+                trajectories.append(Trajectory(f"{start}-{first_action}-{sample}", tuple(steps)))
+    forgotten = tuple(t.trajectory_id for t in rng.sample(trajectories, max(1, len(trajectories) // 20)))
+    return tuple(range(size)), (0, 1), .9, tuple(trajectories), forgotten
