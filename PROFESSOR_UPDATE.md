@@ -1,0 +1,45 @@
+# Research update: trajectory unlearning in offline RL
+
+**Prepared:** 3 October 2026  
+**Repository:** [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private)  
+**Code checkpoint:** `867e00a` (documentation update; experimental results below are from the recorded 29 September checkpoint)
+
+## Ready-to-send update
+
+**Subject: Progress update — exact deletion of logged trajectories in offline RL**
+
+Dear Professor,
+
+I have been studying how an offline RL agent can remove selected logged trajectories while matching the policy it would have learned from the retained data alone. I narrowed the initial project to a precise, testable setting: a deterministic learner on a finite empirical MDP, with complete trajectories as the deletion unit. This lets us distinguish counterfactual fidelity to retained-only retraining from broader claims about privacy or erasing every internal model representation.
+
+I have completed an exact tabular implementation checkpoint. The system subtracts trajectory statistics, finds the states whose decisions may depend on changed model rows, and repairs the policy and values within a sufficient backward-closed region. It handles cyclic transitions, sequential deletion requests, changing optimal actions, and exact ties. An optional bound-certified pruning step removes provably dominated actions from the dependency graph; when its assumptions stop holding, the method falls back to full exact planning. The implementation is checked against an independent rational retained-only reference.
+
+On small synthetic tests, 54 runs covered 162 sequential requests and 810 method executions, with no failures or policy/value mismatches against scratch exact planning. In one constructed 16-state case with dominated bridge actions, pruning reduced the solve region from 16 states to 4 and lowered median request time from 9.847 ms for warm exact policy iteration to 0.448 ms. This is an encouraging example, not evidence of a general speedup: in a dense-influence case the method solved all 16 states and its preparation-inclusive sequence was slower (47.962 ms versus 42.633 ms). The experiments are tiny and synthetic, and I have not yet run neural or GPU experiments.
+
+The distinction from existing work is primarily the target and setting. TrajDeleter focuses on suppressing behavior associated with forgotten offline trajectories and auditing the result; exact online RL unlearning studies a different interaction/oracle model and distributional guarantees; classical incremental planning and action-elimination methods already cover much of the algorithmic machinery for repairing changed MDPs. Our current question is whether deletion-specific structure can provide a complete-cost advantage while exactly matching a specified retained-only offline learner. That is a research hypothesis, not yet an established novelty claim. In particular, local repair, predecessor propagation, and action pruning have substantial prior art, so the current implementation is a correctness baseline rather than a paper-level contribution.
+
+Next I plan to compare against mature SCC-aware/incremental planners and action-elimination baselines, measure preprocessing and fallback costs under less favorable deletion patterns, and test whether a deletion-dependent action-margin certificate can provide a provable work bound beyond standard planning. If that does not survive the comparison, I will pivot to a fixed-feature LSPI control setting, where deletion can also change policy-dependent targets on retained transitions. GPU experiments will follow only after the formal target and novelty gate are stronger.
+
+The current progress log, implementation plan, novelty assessment, proof notes, and benchmark report are in the private repository. I would especially value feedback on whether the deletion-sensitive certificate is a promising theoretical direction, or whether the project should prioritize the LSPI-control pivot.
+
+Best,  
+Aditya
+
+## How this differs from related work
+
+| Work | Main target | Difference from this project’s current question |
+| --- | --- | --- |
+| [TrajDeleter (NDSS 2025)](https://www.ndss-symposium.org/wp-content/uploads/2025-126-paper.pdf) | Suppress behavior/Q-values tied to selected offline trajectories and audit forgetting/utility | We use the exact output of a fully specified retained-only empirical-MDP learner as the counterfactual target. This is a stricter but narrower tabular claim; TrajDeleter remains a required deep-RL comparator if we move to that setting. |
+| [Exact Unlearning in RL (2026)](https://arxiv.org/abs/2606.04182) | Online user-level deletion with environment interaction/oracle assumptions and distributional guarantees | Our current setup is a fixed offline log: no new environment interaction is needed, and deletion acts on trajectory records. The guarantees are not directly comparable because the data-access and learner models differ. |
+| [TOUR (2026)](https://arxiv.org/abs/2607.21111) | Evaluate offline-RL unlearning methods with retraining-relative and multi-attack audits | TOUR is an evaluation framework, not the local exact repair algorithm proposed here. Its controls and audits would be useful for any later neural experiments. |
+| Classical incremental planning and action elimination, e.g. [PRISM incremental policy iteration](https://prismmodelchecker.org/papers/RR-12-05.pdf) and [1973 action elimination](https://pubsonline.informs.org/doi/10.1287/opre.21.3.848) | Reuse planning work or remove actions that cannot be optimal after model changes | These works substantially overlap the implementation’s algorithmic ingredients. They are why we are not claiming that local repair or pruning alone is novel. The open question is whether trajectory-deletion structure yields a new, proved complete-cost certificate or a useful RL-specific guarantee beyond those methods. |
+| LLM unlearning papers in the supplied reading set | Remove or suppress learned content/behaviors in language models, often with retain objectives | They motivate evaluation ideas, but do not solve the fixed-log MDP counterfactual or establish our RL result. |
+
+## Current status and claim boundary
+
+- **Completed:** literature/prior-art review; deterministic tabular learner and trajectory subtraction; independent exact retained-only reference; exact local repair; optional certified action pruning and fallback; cyclic and sequential-deletion validation; preparation-inclusive synthetic benchmarks; proof and limitation notes.
+- **Not completed:** comparison against mature SCC-aware/action-elimination planners; broad or real-task benchmark evidence; a new deletion-dependent complexity theorem; fixed-feature LSPI bridge; GPU IQL experiments; manuscript.
+- **What the current evidence supports:** correctness for the declared small finite empirical-MDP learner and favorable behavior on one constructed locality regime, alongside a measured dense-case slowdown.
+- **What it does not support:** universal speedup, conference-level novelty, neural-checkpoint unlearning, privacy/distributional equivalence, or improved environment safety. Matching retained-only retraining can faithfully reproduce an unsafe policy; safety and counterfactual fidelity must be measured separately.
+
+For the detailed evidence, see [PROGRESS.md](PROGRESS.md), [Checkpoint 01](checkpoints/01_exact_local_repair.md), [novelty reassessment](novelty_reassessment.md), [proof notes](audits/local_repair_proof.md), and the [benchmark summary](output/benchmarks/local_checkpoint_summary.md).
