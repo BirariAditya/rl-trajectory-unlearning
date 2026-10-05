@@ -6,6 +6,8 @@
 
 ## Ready-to-send update
 
+**5 October addendum:** since the update below, Checkpoint 02 has added exact SCC-aware planning controls and timed weaker-bridge, anchor-invalidation, and batched-deletion cases. All 42 tests pass; 162 runs cover 711 requests and 5,688 method executions with exact policy/value agreement. Ordinary graph decomposition reduces much of the dense-planner speed advantage. Local SCC repair still helps on modular data, while pruning helps strongly dominated bridges and loses its benefit in several harder regimes. A closer prior-art check found that FTVI already combines action elimination and graph decomposition, so the current mechanism is not a novel contribution. The next gate is a lean global/action-eliminating comparator and a deletion-specific work theorem, with fixed-feature LSPI as the planned pivot. See [Checkpoint 02](checkpoints/02_scc_controls.md) for the evidence. The email below records the earlier checkpoint and should be read with this addendum.
+
 **Subject: Progress update — exact deletion of logged trajectories in offline RL**
 
 Dear Professor,

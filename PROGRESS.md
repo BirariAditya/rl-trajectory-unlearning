@@ -4,7 +4,7 @@ Last updated: 2026-10-05. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Current stage
 
-**Checkpoint 01 reached: exact local tabular repair, cyclic/sequential validation, and full cost comparison complete.** Read [the checkpoint report](checkpoints/01_exact_local_repair.md). Chosen actions can change; optional certified action pruning can reduce the dependency block; anchor invalidation triggers full repair. The scientific novelty gate remains open. The general margin-sensitive theorem, LSPI-control bridge, and GPU experiments remain future work.
+**Checkpoint 02 reached: matched SCC controls and timed deletion stress tests complete.** Read [the new checkpoint](checkpoints/02_scc_controls.md). Ordinary graph decomposition narrows the apparent speedup; pruned repair helps a constructed bridge regime but loses its benefit on weaker bridges and anchor-invalidating requests. FTVI directly overlaps the pruning/decomposition mechanism, so the scientific novelty gate remains open. The general deletion-sensitive theorem, LSPI-control bridge, and GPU experiments remain future work.
 
 ## Stage tracker
 
@@ -13,7 +13,7 @@ Last updated: 2026-10-05. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Literature and novelty audit | Initial review complete | `literature_review.md`, `novelty_reassessment.md`, three `audits/` notes; CURe full text remains unresolved |
 | Tabular data subtraction and planning | Implemented and tested | Retained-only rebuild comparisons, empty rows, repeated requests, ties, non-greedy predecessor regression |
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
-| Baselines and cost ledger | Tiny, scaling, and cyclic sequential checkpoints complete | 75 tiny runs; 180 timed + 60 memory-pass scaling runs; 810 cyclic checkpoint executions; mature SCC-aware comparisons remain |
+| Baselines and cost ledger | Matched SCC and deletion stress checkpoint complete | 5,688 additional executions over 162 runs; classical SCC baseline implemented; optimized/action-eliminating planner comparisons remain |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
 | Frozen-feature LSPI control | Not started | Validate policy-dependent target corrections against retained-only replay |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
@@ -21,7 +21,9 @@ Last updated: 2026-10-05. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Latest validation
 
-- **SCC checkpoint implementation: 42 tests passed.** Exact sink-first component planning is available for local, pruned, warm full, and scratch full controls. Six-regime smoke: 6 runs / 13 requests / 104 method executions, zero failures. Full repeated comparison pending. [Contract and closer FTVI prior art](audits/scc_planning_checkpoint.md).
+- **SCC checkpoint: 42 tests passed; 162 runs / 711 requests / 5,688 method executions, zero failures.** All eight matched dense/SCC methods agree exactly with scratch dense policy/value output. Six regimes, 8/16/32 states, three dataset seeds and three timing repeats. [Report](checkpoints/02_scc_controls.md), [full tables](output/benchmarks/scc_checkpoint_summary.md), [compressed raw results](output/benchmarks/scc_checkpoint.json.gz).
+- Source `94e7f45107346afb0b9a89d00122b007941e7abc` was clean at launch. [CI 37332934561](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/37332934561) passed 42 tests and all four smoke runners. An independent code review found no correctness defect; benchmark limitations remain documented.
+- At 32 states, modular preparation-plus-sequence cost is 7.778 ms for local SCC versus 21.679 ms for warm SCC. Pruned SCC costs 47.027 ms there. Dominated bridges favor pruning (91.129 ms versus 695.543 ms warm SCC); weaker bridges (1026.023 versus 965.084), anchor invalidation (812.678 versus 766.089), and dense influence (627.802 versus 567.670) do not. These are synthetic descriptive medians, not a universal speedup or novelty result.
 
 - **36 tests passed** after adding exact block policy iteration and certified action pruning. Forty random cyclic datasets × four deletions each match exact retained policies and values under enumeration. Deterministic tests cover restored admissible edges, anchor invalidation, and solver failure without mutation. [Proof and publication boundary](audits/local_repair_proof.md).
 - **Full cyclic checkpoint completed:** 54 runs, 162 sequential deletion requests, **810 method executions**, zero failures. Exact local/pruned and warm policy iteration match scratch rational policies and values; binary64 warm VI matches policies in these cases. [Results](output/benchmarks/local_checkpoint_summary.md), [raw report](output/benchmarks/local_checkpoint.json.gz).
@@ -44,9 +46,9 @@ Last updated: 2026-10-05. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Next implementation tasks
 
-1. Compare against SCC-aware/incremental policy iteration and established action-elimination algorithms; current correctness and constructed speedups do not establish novelty.
-2. Add weaker bridge rewards, timed anchor invalidation, larger/user-block requests, and larger models; charge anchor refresh and preprocessing.
-3. Tighten the general margin-sensitive influence bound or pivot to fixed-feature LSPI control if the contribution remains standard planning.
+1. Add a lean global retained-data planner without repair-index overhead and a matched action-eliminating graph planner. Internal SCC controls are complete; mature-planner/FTVI comparison is not.
+2. Seek a deletion-specific sensitivity/work theorem beyond classical FTVI, with verification, invalidation, and indexing included. Pivot to fixed-feature LSPI control if it reduces to standard planning.
+3. Extend beyond 32-state synthetic cases and trajectory batches only after the comparison gate; batches currently have no user-identity schema. GPU experiments remain staged.
 
 ## Limitations and open decisions
 
@@ -62,7 +64,7 @@ At the end of each implementation session, update this file with the current sta
 
 ## Activity log
 
-- **2026-10-05:** added exact SCC planner, matched dense/SCC runner, six correctness regressions, CI smoke coverage, and SCC/prior-art contract. Forty-two tests and the six-regime smoke pass. Full repeated experiment is the next step. FTVI already combines action elimination with recovered graph locality; that combination is not our novelty.
+- **2026-10-05:** reached Checkpoint 02. Added exact SCC planner, matched dense/SCC runner, six correctness regressions, CI smoke coverage, and SCC/prior-art contract. Forty-two tests and CI pass; full matrix completed with 5,688 executions and zero failures. Archived full costs and timed failure regimes. FTVI already combines action elimination with recovered graph locality; that combination is not our novelty.
 
 - **2026-09-29:** implemented and pushed exact block repair, warm full policy iteration, optional bound-certified action pruning, and atomic sequential requests. Added proof notes, 10 new tests, and cyclic checkpoint runner. All 36 tests and GitHub CI passed.
 - **2026-09-29:** reached Checkpoint 01 after 810 failure-free cyclic method executions. Archived full preparation-inclusive results, retained dense failure regime, and recorded action-elimination prior art. Novelty remains unproven; checkpoint report specifies next gates.

@@ -1,6 +1,6 @@
 # RL trajectory unlearning research
 
-**Current stage:** [Checkpoint 01 reached](checkpoints/01_exact_local_repair.md): exact local policy repair with cyclic/sequential validation and measured cost limits. See [PROGRESS.md](PROGRESS.md) for the live research stage and next tasks.
+**Current stage:** [Checkpoint 02 reached](checkpoints/02_scc_controls.md): matched SCC controls, timed pruning failures, 42 passing tests, and 5,688 failure-free method executions. Ordinary graph decomposition narrows the apparent advantage; scientific novelty remains open. See [PROGRESS.md](PROGRESS.md) for the live stage and next tasks.
 
 This project is located at `C:\Users\adity\Research`. Start with the [literature review](literature_review.md), then the [novelty reassessment](novelty_reassessment.md) and revised [implementation plan](implementation_plan.md). The [audits](audits/) cover prior art, proof contracts, theorem risks, and the GPU route. The implemented learners are explicit offline tabular baselines: empirical-model value iteration and rational exact policy iteration. Structural/pruned exact repair is implemented; the general margin-sensitive theorem and LSPI-control bridge remain research tasks.
 

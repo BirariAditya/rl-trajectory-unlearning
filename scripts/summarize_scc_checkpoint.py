@@ -43,7 +43,7 @@ def main():
                   for m in prepared]
         lines.append(f"| {regime} | {size} | {len(group[0]['requests'])} | " + " | ".join(f"{t:.3f}" for t in totals) + " |")
     lines += ["", "## Mechanism checks", "",
-              "Affected sizes are selected outer blocks. Largest SCC is measured over each request's actual component solve. Pruned methods retain every action inside that block; they do not apply FTVI action elimination to its internal SCC graph.", "",
+              "Affected sizes are reported closure sizes before any forced global fallback; an anchor-invalidating request can report one affected source while solving the full model. Largest SCC describes actual component solves. Pruned methods retain every action inside the solve block; they do not apply FTVI action elimination to its internal SCC graph.", "",
               "| Regime | States | Local SCC affected sizes | Pruned SCC affected sizes | Warm SCC largest components | Pruned SCC largest components | Pruning invalidations |",
               "| --- | ---: | --- | --- | --- | --- | ---: |"]
     for regime, size in groups:
@@ -63,7 +63,7 @@ def main():
                  for m in ("pruned_dense", "warm_dense", "pruned_scc", "warm_scc")]
         lines.append(f"| {size} | " + " | ".join(f"{t:.3f}" for t in times) + " |")
     lines += ["", "## Scope", "",
-              f"- Seeds: {sorted({r['seed'] for r in runs})}; repeats: {sorted({r['repeat'] for r in runs})}. Synthetic models only; medians are descriptive, without statistical significance claims.",
+              f"- Seeds: {sorted({r['seed'] for r in runs})}; repeats: {sorted({r['repeat'] for r in runs})}. Repeats reuse each seed's dataset and sequence, so they are timing replicates. Synthetic models only; medians are descriptive, without statistical significance claims.",
               "- Matched arithmetic, inner exact solver, data, and tie order isolate a graph-decomposition ablation. This is our implementation of classical SCC planning, not an optimized external solver or a TVI/FTVI reproduction.",
               "- All warm/scratch methods share the reverse-index scaffolding used by local repair. A standalone global planner could avoid that extra overhead; this limits speedup interpretation.",
               "- Whole-call wall times include preparation, rational arithmetic, SCC reconstruction, invalidation, and index work as applicable. Work counters are partial diagnostics; anchor evaluation and every Python operation are not individually counted.",
