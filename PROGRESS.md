@@ -1,6 +1,6 @@
 # Research progress
 
-Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
+Last updated: 2026-10-05. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
 
 ## Current stage
 
@@ -21,12 +21,14 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Latest validation
 
+- **SCC checkpoint implementation: 42 tests passed.** Exact sink-first component planning is available for local, pruned, warm full, and scratch full controls. Six-regime smoke: 6 runs / 13 requests / 104 method executions, zero failures. Full repeated comparison pending. [Contract and closer FTVI prior art](audits/scc_planning_checkpoint.md).
+
 - **36 tests passed** after adding exact block policy iteration and certified action pruning. Forty random cyclic datasets × four deletions each match exact retained policies and values under enumeration. Deterministic tests cover restored admissible edges, anchor invalidation, and solver failure without mutation. [Proof and publication boundary](audits/local_repair_proof.md).
 - **Full cyclic checkpoint completed:** 54 runs, 162 sequential deletion requests, **810 method executions**, zero failures. Exact local/pruned and warm policy iteration match scratch rational policies and values; binary64 warm VI matches policies in these cases. [Results](output/benchmarks/local_checkpoint_summary.md), [raw report](output/benchmarks/local_checkpoint.json.gz).
 - Source `70f13773b8e467e99cb429115cc2b437c008708e` was clean at execution. [CI run 36603869847](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/36603869847) passed 36 tests and tiny/scaling/cyclic smoke experiments.
 - Constructed 16-state dominated-bridge case: pruned block size **4 versus 16**; median request **0.448 ms versus 9.847 ms** for warm exact PI. Preparation plus four requests: **12.502 ms versus 46.365 ms**. Dense influence still selects 16 states; full-sequence pruned cost **47.962 ms versus 42.633 ms**, so no universal benefit is claimed.
 
-- Current suite: **26 tests passed**, including more than 100 accepted random deletion requests checked against exact retained-policy enumeration, generated-episode validation, memory-pass checks, and a 32-state case inspecting one affected action. [Special-case proof and contract](audits/nonpolicy_certificate_proof.md).
+- Earlier scaling checkpoint: **26 tests passed**, including more than 100 accepted random deletion requests checked against exact retained-policy enumeration, generated-episode validation, memory-pass checks, and a 32-state case inspecting one affected action. [Special-case proof and contract](audits/nonpolicy_certificate_proof.md).
 - [Scaling summary](output/benchmarks/scaling_summary.md) and [compressed raw report](output/benchmarks/scaling.json.gz): **12 settings**, sparse/dense × 16/64 states × 3 seeds, with 3 randomized-order timing repetitions and a separate memory pass. All 192 updating-method runs across timing/memory passes converged and matched the retained numerical reference. Maximum Q error: `1.67e-10` rounded upward. The reference minimum action gap across these runs was approximately `3.74e-4`.
 - Scaling source: clean revision `c6ce7331a94a6f9484de0305bf1c2099dd058909`. [GitHub CI run 36600961815](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/36600961815) passed all 26 tests plus tiny and scaling smoke runs.
 - **Negative result retained:** median of per-seed median request times on the 64-state dense logs was 120.520 ms for global certified repair versus 29.086 ms for warm-started planning. On the 64-state sparse logs it was 32.378 ms versus 42.199 ms. These synthetic, instrumented results motivate testing graph dependence; they do not establish a general speedup or significance.
@@ -59,6 +61,8 @@ Last updated: 2026-09-29. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 At the end of each implementation session, update this file with the current stage, actual commands/results, output paths, completed tasks, next tasks, and blockers. Mark a gate complete only when its evidence exists. Keep failed experiments and scope limitations visible. Do not silently upgrade a hypothesis to a result.
 
 ## Activity log
+
+- **2026-10-05:** added exact SCC planner, matched dense/SCC runner, six correctness regressions, CI smoke coverage, and SCC/prior-art contract. Forty-two tests and the six-regime smoke pass. Full repeated experiment is the next step. FTVI already combines action elimination with recovered graph locality; that combination is not our novelty.
 
 - **2026-09-29:** implemented and pushed exact block repair, warm full policy iteration, optional bound-certified action pruning, and atomic sequential requests. Added proof notes, 10 new tests, and cyclic checkpoint runner. All 36 tests and GitHub CI passed.
 - **2026-09-29:** reached Checkpoint 01 after 810 failure-free cyclic method executions. Archived full preparation-inclusive results, retained dense failure regime, and recorded action-elimination prior art. Novelty remains unproven; checkpoint report specifies next gates.

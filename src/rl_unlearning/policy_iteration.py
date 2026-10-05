@@ -17,6 +17,9 @@ class ExactPlan:
     iterations: int
     action_evaluations: int
     linear_system_sizes: tuple
+    graph_rows_scanned: int = 0
+    graph_successors_scanned: int = 0
+    component_sizes: tuple = ()
 
 
 def policy_iteration(states, actions, gamma, row_lookup, *, initial_policy=None,

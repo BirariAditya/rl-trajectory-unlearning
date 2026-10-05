@@ -12,6 +12,7 @@ from types import MappingProxyType
 from .nonpolicy_certificate import NonPolicyCertificate
 from .policy_iteration import policy_iteration
 from .reference import _solve
+from .scc_planner import scc_policy_iteration
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,9 @@ class LocalRepairResult:
     index_rows_rebuilt: int
     index_edges_added: int
     exact_policy_certificate: bool = True
+    graph_rows_scanned: int = 0
+    graph_successors_scanned: int = 0
+    component_sizes: tuple = ()
 
 
 class LocalPolicyRepair(NonPolicyCertificate):
@@ -42,7 +46,10 @@ class LocalPolicyRepair(NonPolicyCertificate):
     """
 
     def __init__(self, states, actions, gamma, trajectories, initial_policy=None,
-                 anchor_policy=None):
+                 anchor_policy=None, solver="dense"):
+        if solver not in ("dense", "scc"):
+            raise ValueError("solver must be dense or scc")
+        self._solve_plan = policy_iteration if solver == "dense" else scc_policy_iteration
         self._states, self._actions = tuple(states), tuple(actions)
         if not self._states or not self._actions or len(set(self._states)) != len(self._states) or len(set(self._actions)) != len(self._actions):
             raise ValueError("nonempty unique states/actions required")
@@ -85,7 +92,7 @@ class LocalPolicyRepair(NonPolicyCertificate):
             for successor in successors:
                 if successor is not None and row not in self._pruned_rows:
                     self._reverse[successor].add(row)
-        self.preparation_plan = policy_iteration(self._states, self._actions, self._gamma,
+        self.preparation_plan = self._solve_plan(self._states, self._actions, self._gamma,
                                                 self._lookup, initial_policy=initial_policy)
         self._policy = dict(self.preparation_plan.policy)
         self._values = dict(self.preparation_plan.values)
@@ -132,7 +139,7 @@ class LocalPolicyRepair(NonPolicyCertificate):
             row = (s, a)
             return self._normalized(candidates[row] if row in candidates else self._rows.get(row))
 
-        plan = policy_iteration(solve_states, self._actions, self._gamma, retained_lookup,
+        plan = self._solve_plan(solve_states, self._actions, self._gamma, retained_lookup,
                                 initial_policy=self._policy, boundary_values=self._values,
                                 max_iterations=max_iterations)
         changed_actions = tuple((s, plan.policy[s]) for s in solve_states
@@ -174,7 +181,10 @@ class LocalPolicyRepair(NonPolicyCertificate):
                                  fallback, transitions_read, copied, edges_visited,
                                  removed_edges, plan.action_evaluations, plan.linear_system_sizes,
                                  len(self._pruned_rows), anchor_invalid, len(candidate_pruned),
-                                 rebuilt_rows, added_edges)
+                                 rebuilt_rows, added_edges,
+                                 graph_rows_scanned=plan.graph_rows_scanned,
+                                 graph_successors_scanned=plan.graph_successors_scanned,
+                                 component_sizes=plan.component_sizes)
 
     def try_delete(self, trajectory_ids):
         raise NotImplementedError("use delete_and_repair; it also maintains the reverse index")

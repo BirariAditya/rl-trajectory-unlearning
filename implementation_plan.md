@@ -4,6 +4,8 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
+**5 October update:** exact SCC planning and a six-regime matched dense/SCC harness are implemented; 42 tests and the smoke matrix pass. Full repeated results are pending. [FTVI explicitly combines action elimination and smaller components](https://arxiv.org/abs/1401.3910), so that combination is not a viable novelty claim by itself. The new SCC solver is a controlled internal baseline, not a reproduction of FTVI or a mature optimized planner; see [its contract](audits/scc_planning_checkpoint.md).
+
 Live implementation status and validation evidence are maintained in [PROGRESS.md](PROGRESS.md). Implemented: baseline harness, rational oracle, ordinary sweeping, repeated scaling, restricted no-change certificate, exact backward-closed block repair, optional action pruning, and cyclic sequential comparisons with warm policy iteration. The [block-repair proof](audits/local_repair_proof.md) explicitly treats action elimination as prior art. The general margin-sensitive deletion theorem and LSPI-control bridge remain staged work; the novelty gate is still open.
 
 | Track | Proposed claim | Gate before expanding |
@@ -91,7 +93,7 @@ When `N_D(s,a)=0`, that row has reward zero and terminates with probability one.
 
 ## 4. Staged implementation and acceptance gates
 
-**Current status:** Phases 0–3 have an initial implementation in `src/rl_unlearning` and basic tests. Their publication-grade property testing, independent reference, timing ledger, and adversarial checks remain to do. A passing prototype test is not completion of the research gates below.
+**Current status:** Phases 0–3 have implemented tabular learners, an independent rational reference, randomized correctness checks, and a timing ledger. Exact local/pruned repair and the SCC planning ablation are also implemented. Broad adversarial benchmarking, mature external planner comparisons, and the general sparse-certificate theorem remain open; consult `PROGRESS.md` for dated evidence.
 
 ### Phase 0 — Baseline scaffold and a tiny known MDP
 
