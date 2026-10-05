@@ -14,6 +14,8 @@ python scripts/run_scaling.py --output results/scaling.json
 python scripts/run_local_checkpoint.py --output results/local_checkpoint.json.gz
 python scripts/run_scc_checkpoint.py --output results/scc_checkpoint.json.gz
 python scripts/summarize_scc_checkpoint.py results/scc_checkpoint.json.gz
+python scripts/run_global_checkpoint.py --output results/global_checkpoint.json.gz
+python scripts/summarize_global_checkpoint.py results/global_checkpoint.json.gz
 ```
 
 The package is at `src/rl_unlearning`. It currently uses only the Python standard library. `delete_and_repair` removes specified trajectories, tries local Bellman backups, checks the retained-model residual and action gaps, and falls back to full warm-started value iteration when it cannot certify the policy. The returned `RepairResult` reports local backups and full residual checks separately.

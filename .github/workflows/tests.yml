@@ -13,3 +13,4 @@ jobs:
       - run: python scripts/run_scaling.py --sizes 16 --seeds 0 --repeats 2 --output results/ci-scaling.json
       - run: python scripts/run_local_checkpoint.py --sizes 8 --seeds 0 --repeats 1 --output results/ci-local.json.gz
       - run: python scripts/run_scc_checkpoint.py --sizes 8 --seeds 0 --repeats 1 --output results/ci-scc.json.gz
+      - run: python scripts/run_global_checkpoint.py --sizes 8 --seeds 0 --repeats 1 --output results/ci-global.json.gz

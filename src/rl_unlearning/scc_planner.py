@@ -7,7 +7,7 @@ a reproduction of TVI/FTVI. All positive-probability action edges are included.
 from collections import ChainMap
 from fractions import Fraction as F
 
-from .policy_iteration import ExactPlan, policy_iteration
+from .policy_iteration import ExactPlan, _action_sets, policy_iteration
 
 
 def _sink_components(states, adjacency):
@@ -50,7 +50,7 @@ def _sink_components(states, adjacency):
 
 def scc_policy_iteration(states, actions, gamma, row_lookup, *,
                          initial_policy=None, boundary_values=None,
-                         max_iterations=10_000):
+                         max_iterations=10_000, allowed_actions=None):
     """Solve sink SCCs first, using already solved values as exact boundaries.
 
     Rebuild the all-action support graph on every call. Graph construction and
@@ -65,11 +65,12 @@ def scc_policy_iteration(states, actions, gamma, row_lookup, *,
     if not 0 <= gamma < 1 or max_iterations < 1:
         raise ValueError("invalid discount or iteration budget")
     state_set = set(states)
+    available = _action_sets(states, actions, allowed_actions)
     boundary = {} if boundary_values is None else boundary_values
     adjacency, rows, entries = {}, 0, 0
     for state in states:
         successors = {}
-        for action in actions:
+        for action in available[state]:
             _, probabilities = row_lookup(state, action)
             rows += 1
             for successor, probability in probabilities.items():
@@ -89,7 +90,7 @@ def scc_policy_iteration(states, actions, gamma, row_lookup, *,
         plan = policy_iteration(component, actions, gamma, row_lookup,
                                 initial_policy=initial_policy,
                                 boundary_values=ChainMap(values, boundary),
-                                max_iterations=max_iterations)
+                                max_iterations=max_iterations, allowed_actions=available)
         policy.update(plan.policy)
         values.update(plan.values)
         q.update(plan.q)

@@ -22,12 +22,28 @@ class ExactPlan:
     component_sizes: tuple = ()
 
 
+def _action_sets(states, actions, allowed_actions):
+    """Validate state-specific subsets and retain the global action tie order."""
+    if allowed_actions is None:
+        return dict.fromkeys(states, actions)
+    selected = {}
+    for state in states:
+        supplied = tuple(allowed_actions[state])
+        if not supplied or len(set(supplied)) != len(supplied) or any(a not in actions for a in supplied):
+            raise ValueError("each state needs a nonempty unique subset of actions")
+        selected[state] = tuple(a for a in actions if a in supplied)
+    return selected
+
+
 def policy_iteration(states, actions, gamma, row_lookup, *, initial_policy=None,
-                     boundary_values=None, max_iterations=10_000):
+                     boundary_values=None, max_iterations=10_000, allowed_actions=None):
     """Solve a block; row_lookup returns rational reward and successor probabilities.
 
     Boundary states must have fixed values justified by the caller. The solver
     makes no claim that an arbitrary frozen boundary is valid after deletion.
+    allowed_actions restricts the optimization problem; callers must justify
+    eliminated actions. Returned Q only covers permitted actions. A warm policy
+    selecting an eliminated action is reset there to the first allowed action.
     """
     states, actions = tuple(states), tuple(actions)
     gamma = F(str(gamma))
@@ -37,11 +53,13 @@ def policy_iteration(states, actions, gamma, row_lookup, *, initial_policy=None,
         raise ValueError("invalid discount or iteration budget")
     if not states:
         return ExactPlan({}, {}, {}, 0, 0, ())
+    available = _action_sets(states, actions, allowed_actions)
     boundary = {} if boundary_values is None else boundary_values
     indices = {s: i for i, s in enumerate(states)}
     policy = {s: initial_policy[s] if initial_policy is not None else actions[0] for s in states}
     if any(a not in actions for a in policy.values()):
         raise ValueError("invalid initial policy")
+    policy = {s: a if a in available[s] else available[s][0] for s, a in policy.items()}
     action_evaluations = 0
     sizes = []
     for iteration in range(1, max_iterations + 1):
@@ -63,13 +81,13 @@ def policy_iteration(states, actions, gamma, row_lookup, *, initial_policy=None,
         sizes.append(len(states))
         q = {}
         for s in states:
-            for a in actions:
+            for a in available[s]:
                 reward, probabilities = row_lookup(s, a)
                 q[(s, a)] = reward + gamma * sum(
                     (p * (values[t] if t in indices else boundary[t])
                      for t, p in probabilities.items() if t is not None), F(0))
                 action_evaluations += 1
-        improved = {s: max(actions, key=lambda a: q[(s, a)]) for s in states}
+        improved = {s: max(available[s], key=lambda a: q[(s, a)]) for s in states}
         if improved == policy:
             return ExactPlan(policy, values, q, iteration, action_evaluations, tuple(sizes))
         policy = improved
