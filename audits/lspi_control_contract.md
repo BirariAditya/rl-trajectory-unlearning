@@ -1,6 +1,6 @@
 # Fixed-feature LSPI replay validation contract
 
-5 October 2026. This is a correctness prototype and a prospective Track B
+Implemented 5 October and integrated/validated 7 October 2026. This is a correctness prototype and a prospective Track B
 checkpoint, not a novelty, optimal-control, or privacy-unlearning result.
 
 ## Declared learner and output
@@ -62,6 +62,15 @@ logs. Selected work counters expose sample reads, successor checks, target
 rank-one additions, solves, and action scores; they are not a complete accounting
 of rational bit complexity, memory allocation, dictionary copying, or latency.
 No speedup theorem follows from a low-rank matrix difference alone.
+
+`LSPIWork` differs between scratch and replay and is not part of the equality
+claim. `samples_read` counts assembly/deletion visits, not input validation or
+all preparation reads. `target_rank_one_updates` counts dense outer-product
+additions (each quadratic in feature dimension), not constant-time operations.
+The successor dictionary is copied in full on deletion and checked each policy
+step, including entries whose aggregate has become zero. These costs remain even
+when no retained transition is scanned by replay. The prototype makes no local
+or sublinear overall-work claim.
 
 Original [LSPI (2003), pp. 1122–1124](https://www.jmlr.org/papers/volume4/lagoudakis03a/lagoudakis03a.pdf)
 already gives sample-incremental LSTDQ and Sherman–Morrison updates, and explicitly

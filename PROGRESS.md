@@ -4,7 +4,7 @@ Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Current stage
 
-**Checkpoint 02 reached: matched SCC controls and timed deletion stress tests complete.** Read [the new checkpoint](checkpoints/02_scc_controls.md). Ordinary graph decomposition narrows the apparent speedup; pruned repair helps a constructed bridge regime but loses its benefit on weaker bridges and anchor-invalidating requests. FTVI directly overlaps the pruning/decomposition mechanism, so the scientific novelty gate remains open. The general deletion-sensitive theorem, LSPI-control bridge, and GPU experiments remain future work.
+**Checkpoint 03 reached: lean global/action-elimination controls and exact LSPI replay validated.** Read [the checkpoint](checkpoints/03_global_controls_and_lspi.md). Classical elimination beats the current pruned-local implementation on bridge and anchor-invalidation lifecycle cost. The tabular mechanism is retained as a reference, and fixed-feature LSPI is the next research priority. Its finite-schedule replay matches retained-only matrices/weights/policies, but efficiency against strong incremental baselines and paper-level novelty remain open. GPU experiments have not started.
 
 ## Stage tracker
 
@@ -13,15 +13,18 @@ Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Literature and novelty audit | Initial review complete | `literature_review.md`, `novelty_reassessment.md`, three `audits/` notes; CURe full text remains unresolved |
 | Tabular data subtraction and planning | Implemented and tested | Retained-only rebuild comparisons, empty rows, repeated requests, ties, non-greedy predecessor regression |
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
-| Baselines and cost ledger | Matched SCC and deletion stress checkpoint complete | 5,688 additional executions over 162 runs; classical SCC baseline implemented; optimized/action-eliminating planner comparisons remain |
+| Baselines and cost ledger | Lean global and classical elimination checkpoint complete | 4,158 further method executions / 108 runs; full lifecycle and scratch costs charged; external optimized FTVI is not reproduced |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
-| Frozen-feature LSPI control | Not started | Validate policy-dependent target corrections against retained-only replay |
+| Frozen-feature LSPI control | Initial correctness gate passed | Exact finite-schedule replay, target-switch counterexample, cycles/singularity; next complete-cost and incremental-baseline comparison |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
 
-- **Next checkpoint underway: 59 tests pass.** Lean global planning without local reverse indexes and global strict-bound action elimination are implemented. Six-regime smoke: 91 executions, zero disagreements; full comparison pending. Fixed-feature LSPI replay is implemented and checked against independently assembled retained-only iterates, including a one-shot-downdate counterexample, cycles and singularity. [Global baseline contract](audits/global_elimination_contract.md), [LSPI contract](audits/lspi_control_contract.md).
+- **60 tests pass; Checkpoint 03 complete.** Global comparison: 108 runs / 594 requests / 4,158 method executions, zero policy/value mismatches. Six regimes, 16/32 states, three dataset seeds and three timing repeats. [Tables](output/benchmarks/global_checkpoint_summary.md), [raw archive](output/benchmarks/global_checkpoint.json.gz), [interpretation](checkpoints/03_global_controls_and_lspi.md).
+- Global experiment source `51a999a2519ada3b95e08de9d380a1233a109bbf` was clean at launch. [Source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/37545210432) passed 59 tests and all smoke runners; final local validation adds a passing later-iteration LSPI singularity regression for 60 tests total.
+- At 32 states, dominated-bridge lifecycle cost is 32.969 ms for classical global elimination versus 96.257 ms for current pruned-local repair; anchor invalidation is 39.642 versus 835.267 ms. Local SCC still helps modular data (7.930 versus 24.282 ms lean warm SCC). Engineering choices differ; these descriptive synthetic results do not isolate locality alone.
+- LSPI replay passes eleven tests, including 25 random shared-feature datasets with three deletion requests each, exact every-iterate comparisons, cycles, ties, and singular failure without mutation. [Worked counterexample](checkpoints/lspi_control_example.md), [machine-readable demo](output/benchmarks/lspi_demo.json), [contract](audits/lspi_control_contract.md). No LSPI performance or novelty claim yet.
 
 - **SCC checkpoint: 42 tests passed; 162 runs / 711 requests / 5,688 method executions, zero failures.** All eight matched dense/SCC methods agree exactly with scratch dense policy/value output. Six regimes, 8/16/32 states, three dataset seeds and three timing repeats. [Report](checkpoints/02_scc_controls.md), [full tables](output/benchmarks/scc_checkpoint_summary.md), [compressed raw results](output/benchmarks/scc_checkpoint.json.gz).
 - Source `94e7f45107346afb0b9a89d00122b007941e7abc` was clean at launch. [CI 37332934561](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/37332934561) passed 42 tests and all four smoke runners. An independent code review found no correctness defect; benchmark limitations remain documented.
@@ -48,9 +51,9 @@ Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Next implementation tasks
 
-1. Add a lean global retained-data planner without repair-index overhead and a matched action-eliminating graph planner. Internal SCC controls are complete; mature-planner/FTVI comparison is not.
-2. Seek a deletion-specific sensitivity/work theorem beyond classical FTVI, with verification, invalidation, and indexing included. Pivot to fixed-feature LSPI control if it reduces to standard planning.
-3. Extend beyond 32-state synthetic cases and trajectory batches only after the comparison gate; batches currently have no user-identity schema. GPU experiments remain staged.
+1. Prioritize fixed-feature LSPI complete-cost experiments: compare scratch assembly, cached-statistic reconstruction, target-correction replay and incremental/refactorized solves under the same finite schedule.
+2. Vary retained sample count, feature dimension, successor groups, deletion size and policy switches; include copies, full policy scans, conditioning/failure, storage and preparation. Demonstrate more than an advantage over per-sample scratch.
+3. Audit whether any proposed switch/deletion-dependent work theorem goes beyond incremental LSPI. If not, reframe before neural scale-up. Keep tabular code as a reference; user-identity batches, larger real tasks and GPU experiments remain staged.
 
 ## Limitations and open decisions
 
@@ -65,6 +68,8 @@ Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 At the end of each implementation session, update this file with the current stage, actual commands/results, output paths, completed tasks, next tasks, and blockers. Mark a gate complete only when its evidence exists. Keep failed experiments and scope limitations visible. Do not silently upgrade a hypothesis to a result.
 
 ## Activity log
+
+- **2026-10-07:** completed Checkpoint 03 with 4,158 failure-free global-control executions, 60 passing tests, and exact fixed-feature LSPI replay. Added later-iteration singularity atomicity regression and archived the one-shot-downdate counterexample. Strong classical controls undermine the current tabular headline; moved next research priority to LSPI efficiency/prior-art gates while retaining explicit novelty limits.
 
 - **2026-10-05:** reached Checkpoint 02. Added exact SCC planner, matched dense/SCC runner, six correctness regressions, CI smoke coverage, and SCC/prior-art contract. Forty-two tests and CI pass; full matrix completed with 5,688 executions and zero failures. Archived full costs and timed failure regimes. FTVI already combines action elimination with recovered graph locality; that combination is not our novelty.
 

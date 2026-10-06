@@ -123,6 +123,23 @@ class LSPIControlTests(unittest.TestCase):
         self.assertEqual(result.iterates[0].policy_in, (0, 0))
         self.assertEqual(state.trajectory_ids, frozenset(t.trajectory_id for t in final))
 
+    def test_singularity_after_policy_switch_is_atomic(self):
+        problem = LSPIProblem((0,), (0, 1), {(0, 0): (5,), (0, 1): (1,)}, {0: 1})
+        retained = (episode("loop", (0, 1, 1, 0), (0, 1, 0, None)),)
+        extra = episode("extra", (0, 1, 0, None))
+        state = LSPIReplayState(problem, retained + (extra,))
+        original = state.replay()
+        self.assertNotEqual(original.status, "singular")
+        result = state.delete_and_replay(("extra",))
+        self.assertReplayEqual(result, scratch_lspi(problem, retained))
+        self.assertEqual(result.iterates[0].weights, (F(1, 2),))
+        self.assertEqual(result.iterates[0].policy_out, (0,))
+        self.assertEqual(result.iterates[1].matrix, ((F(0),),))
+        self.assertEqual(result.status, "singular")
+        self.assertEqual(len(result.iterates), 2)
+        self.assertEqual(state.trajectory_ids, frozenset(("loop", "extra")))
+        self.assertReplayEqual(state.replay(), original)
+
     def test_all_deleted_has_exact_zero_critic_and_tie_policy(self):
         problem, data, _ = switch_fixture()
         result = LSPIReplayState(problem, data).delete_and_replay(t.trajectory_id for t in data)

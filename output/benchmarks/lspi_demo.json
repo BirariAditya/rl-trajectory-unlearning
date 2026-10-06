@@ -1,0 +1,642 @@
+{
+  "git_commit": "51a999a2519ada3b95e08de9d380a1233a109bbf",
+  "git_dirty": true,
+  "source_sha256": {
+    "src\\rl_unlearning\\lspi_control.py": "a44433a4df1d4e53ad849277018d2febe9173269a04e6613feb1d17881665d46",
+    "scripts\\run_lspi_demo.py": "69f61570112d1d9ef5edd1c894cf5835b4f26af757a06c5d9132e55e31fdc453"
+  },
+  "scope": "Exact finite-schedule fixed-feature replay; assembly equivalence, no speedup/optimality/privacy/novelty claim.",
+  "states": [
+    0,
+    1
+  ],
+  "actions": [
+    0,
+    1
+  ],
+  "gamma": "1/2",
+  "regularization": "1/2",
+  "iterations": 3,
+  "initial_policy": {
+    "0": 0,
+    "1": 0
+  },
+  "feature_order": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      1,
+      1
+    ]
+  ],
+  "features": [
+    [
+      "1",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "0",
+      "1",
+      "0",
+      "0"
+    ],
+    [
+      "0",
+      "0",
+      "1",
+      "0"
+    ],
+    [
+      "0",
+      "0",
+      "0",
+      "1"
+    ]
+  ],
+  "dataset": [
+    {
+      "trajectory_id": "xa",
+      "transitions": [
+        {
+          "state": 0,
+          "action": 0,
+          "reward": 0,
+          "next_state": 1
+        },
+        {
+          "state": 1,
+          "action": 0,
+          "reward": 0,
+          "next_state": null
+        }
+      ]
+    },
+    {
+      "trajectory_id": "xb",
+      "transitions": [
+        {
+          "state": 0,
+          "action": 1,
+          "reward": "1/16",
+          "next_state": null
+        }
+      ]
+    },
+    {
+      "trajectory_id": "zb",
+      "transitions": [
+        {
+          "state": 1,
+          "action": 1,
+          "reward": "1/4",
+          "next_state": null
+        }
+      ]
+    },
+    {
+      "trajectory_id": "forget",
+      "transitions": [
+        {
+          "state": 1,
+          "action": 0,
+          "reward": 1,
+          "next_state": null
+        }
+      ]
+    }
+  ],
+  "deletion_ids": [
+    "forget"
+  ],
+  "full": {
+    "iterates": [
+      {
+        "index": 0,
+        "policy_in": [
+          0,
+          0
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "-1/2",
+            "0"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "5/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "1",
+          "1/4"
+        ],
+        "weights": [
+          "2/15",
+          "1/24",
+          "2/5",
+          "1/6"
+        ],
+        "policy_out": [
+          0,
+          0
+        ]
+      },
+      {
+        "index": 1,
+        "policy_in": [
+          0,
+          0
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "-1/2",
+            "0"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "5/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "1",
+          "1/4"
+        ],
+        "weights": [
+          "2/15",
+          "1/24",
+          "2/5",
+          "1/6"
+        ],
+        "policy_out": [
+          0,
+          0
+        ]
+      },
+      {
+        "index": 2,
+        "policy_in": [
+          0,
+          0
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "-1/2",
+            "0"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "5/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "1",
+          "1/4"
+        ],
+        "weights": [
+          "2/15",
+          "1/24",
+          "2/5",
+          "1/6"
+        ],
+        "policy_out": [
+          0,
+          0
+        ]
+      }
+    ],
+    "policy": [
+      0,
+      0
+    ],
+    "weights": [
+      "2/15",
+      "1/24",
+      "2/5",
+      "1/6"
+    ],
+    "status": "fixed_point",
+    "repeat_start": 0,
+    "repeat_length": 1,
+    "work": {
+      "samples_read": 15,
+      "successor_entries_checked": 0,
+      "target_rank_one_updates": 0,
+      "linear_solves": 3,
+      "action_scores": 12
+    }
+  },
+  "replay": {
+    "iterates": [
+      {
+        "index": 0,
+        "policy_in": [
+          0,
+          0
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "-1/2",
+            "0"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "3/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "0",
+          "1/4"
+        ],
+        "weights": [
+          "0",
+          "1/24",
+          "0",
+          "1/6"
+        ],
+        "policy_out": [
+          1,
+          1
+        ]
+      },
+      {
+        "index": 1,
+        "policy_in": [
+          1,
+          1
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "0",
+            "-1/2"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "3/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "0",
+          "1/4"
+        ],
+        "weights": [
+          "1/18",
+          "1/24",
+          "0",
+          "1/6"
+        ],
+        "policy_out": [
+          0,
+          1
+        ]
+      },
+      {
+        "index": 2,
+        "policy_in": [
+          0,
+          1
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "0",
+            "-1/2"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "3/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "0",
+          "1/4"
+        ],
+        "weights": [
+          "1/18",
+          "1/24",
+          "0",
+          "1/6"
+        ],
+        "policy_out": [
+          0,
+          1
+        ]
+      }
+    ],
+    "policy": [
+      0,
+      1
+    ],
+    "weights": [
+      "1/18",
+      "1/24",
+      "0",
+      "1/6"
+    ],
+    "status": "fixed_point",
+    "repeat_start": 2,
+    "repeat_length": 1,
+    "work": {
+      "samples_read": 1,
+      "successor_entries_checked": 3,
+      "target_rank_one_updates": 1,
+      "linear_solves": 3,
+      "action_scores": 12
+    }
+  },
+  "retained_scratch": {
+    "iterates": [
+      {
+        "index": 0,
+        "policy_in": [
+          0,
+          0
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "-1/2",
+            "0"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "3/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "0",
+          "1/4"
+        ],
+        "weights": [
+          "0",
+          "1/24",
+          "0",
+          "1/6"
+        ],
+        "policy_out": [
+          1,
+          1
+        ]
+      },
+      {
+        "index": 1,
+        "policy_in": [
+          1,
+          1
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "0",
+            "-1/2"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "3/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "0",
+          "1/4"
+        ],
+        "weights": [
+          "1/18",
+          "1/24",
+          "0",
+          "1/6"
+        ],
+        "policy_out": [
+          0,
+          1
+        ]
+      },
+      {
+        "index": 2,
+        "policy_in": [
+          0,
+          1
+        ],
+        "matrix": [
+          [
+            "3/2",
+            "0",
+            "0",
+            "-1/2"
+          ],
+          [
+            "0",
+            "3/2",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "3/2",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "3/2"
+          ]
+        ],
+        "rhs": [
+          "0",
+          "1/16",
+          "0",
+          "1/4"
+        ],
+        "weights": [
+          "1/18",
+          "1/24",
+          "0",
+          "1/6"
+        ],
+        "policy_out": [
+          0,
+          1
+        ]
+      }
+    ],
+    "policy": [
+      0,
+      1
+    ],
+    "weights": [
+      "1/18",
+      "1/24",
+      "0",
+      "1/6"
+    ],
+    "status": "fixed_point",
+    "repeat_start": 2,
+    "repeat_length": 1,
+    "work": {
+      "samples_read": 12,
+      "successor_entries_checked": 0,
+      "target_rank_one_updates": 0,
+      "linear_solves": 3,
+      "action_scores": 12
+    }
+  },
+  "all_iterates_match": true,
+  "one_shot_policy": [
+    1,
+    1
+  ],
+  "one_shot_disagrees": true
+}
