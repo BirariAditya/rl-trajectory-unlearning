@@ -1,6 +1,6 @@
 # Research progress
 
-Last updated: 2026-10-05. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
+Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
 
 ## Current stage
 
@@ -21,7 +21,7 @@ Last updated: 2026-10-05. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Latest validation
 
-- **Next checkpoint underway:** lean global planning without local reverse indexes and global strict-bound action elimination are implemented. The 48-test suite passed before adding one further redundant-anchor regression; all seven global-planner tests now pass. The initial six-regime smoke completed 91 executions with zero disagreements; full comparison is pending. A fixed-feature LSPI replay prototype is being implemented separately. [Global baseline contract](audits/global_elimination_contract.md).
+- **Next checkpoint underway: 59 tests pass.** Lean global planning without local reverse indexes and global strict-bound action elimination are implemented. Six-regime smoke: 91 executions, zero disagreements; full comparison pending. Fixed-feature LSPI replay is implemented and checked against independently assembled retained-only iterates, including a one-shot-downdate counterexample, cycles and singularity. [Global baseline contract](audits/global_elimination_contract.md), [LSPI contract](audits/lspi_control_contract.md).
 
 - **SCC checkpoint: 42 tests passed; 162 runs / 711 requests / 5,688 method executions, zero failures.** All eight matched dense/SCC methods agree exactly with scratch dense policy/value output. Six regimes, 8/16/32 states, three dataset seeds and three timing repeats. [Report](checkpoints/02_scc_controls.md), [full tables](output/benchmarks/scc_checkpoint_summary.md), [compressed raw results](output/benchmarks/scc_checkpoint.json.gz).
 - Source `94e7f45107346afb0b9a89d00122b007941e7abc` was clean at launch. [CI 37332934561](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/37332934561) passed 42 tests and all four smoke runners. An independent code review found no correctness defect; benchmark limitations remain documented.

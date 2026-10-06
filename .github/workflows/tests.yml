@@ -14,3 +14,4 @@ jobs:
       - run: python scripts/run_local_checkpoint.py --sizes 8 --seeds 0 --repeats 1 --output results/ci-local.json.gz
       - run: python scripts/run_scc_checkpoint.py --sizes 8 --seeds 0 --repeats 1 --output results/ci-scc.json.gz
       - run: python scripts/run_global_checkpoint.py --sizes 8 --seeds 0 --repeats 1 --output results/ci-global.json.gz
+      - run: python scripts/run_lspi_demo.py --output results/ci-lspi.json
