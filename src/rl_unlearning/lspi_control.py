@@ -157,7 +157,7 @@ def _new_work(samples_read=0):
                 target_rank_one_updates=0, linear_solves=0, action_scores=0)
 
 
-def _run(problem, assemble, work):
+def _run(problem, assemble, work, *, reuse_policy_evaluations=False):
     """Run all declared iterations, even after a fixed point or a policy cycle.
 
     A singular evaluation terminates explicitly; no pseudoinverse or altered
@@ -166,17 +166,22 @@ def _run(problem, assemble, work):
     """
     policy = tuple(problem.initial_policy[s] for s in problem.states)
     seen, repeat_start, repeat_length = {policy: 0}, None, None
-    trace = []
+    trace, cache = [], {}
     for index in range(problem.iterations):
-        matrix, rhs = assemble(policy)
-        matrix, rhs = tuple(tuple(row) for row in matrix), tuple(rhs)
-        work["linear_solves"] += 1
-        try:
-            weights = _solve(matrix, rhs)
-        except SingularLSTDMatrix:
-            trace.append(LSPIIterate(index, policy, matrix, rhs, None, None))
-            return LSPIResult(tuple(trace), policy, None, "singular",
-                              repeat_start, repeat_length, LSPIWork(**work))
+        if reuse_policy_evaluations and policy in cache:
+            matrix, rhs, weights = cache[policy]
+        else:
+            matrix, rhs = assemble(policy)
+            matrix, rhs = tuple(tuple(row) for row in matrix), tuple(rhs)
+            work["linear_solves"] += 1
+            try:
+                weights = _solve(matrix, rhs)
+            except SingularLSTDMatrix:
+                trace.append(LSPIIterate(index, policy, matrix, rhs, None, None))
+                return LSPIResult(tuple(trace), policy, None, "singular",
+                                  repeat_start, repeat_length, LSPIWork(**work))
+            if reuse_policy_evaluations:
+                cache[policy] = matrix, rhs, weights
         improved = []
         for state in problem.states:
             scores = [sum((x * w for x, w in zip(problem.features[(state, action)], weights)), F(0))
@@ -287,7 +292,7 @@ class LSPIReplayState:
         requested = tuple(trajectory_ids)
         if len(set(requested)) != len(requested):
             raise ValueError("duplicate deletion ids")
-        unknown = set(requested) - self.trajectory_ids
+        unknown = {identifier for identifier in requested if identifier not in self._data}
         if unknown:
             raise KeyError(f"unknown or already deleted ids: {sorted(unknown)}")
         problem = self.problem

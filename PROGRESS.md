@@ -21,6 +21,8 @@ Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Latest validation
 
+- **13 October implementation checkpoint: 74 tests pass.** Added cached C/b/G reconstruction and within-request repeated-policy evaluation memoization as stronger LSPI controls. The four-method smoke compares every exact trace; full repeated cost matrix is next. Preparing comprehensive learning/presentation documentation for 18 October.
+
 - **60 tests pass; Checkpoint 03 complete.** Global comparison: 108 runs / 594 requests / 4,158 method executions, zero policy/value mismatches. Six regimes, 16/32 states, three dataset seeds and three timing repeats. [Tables](output/benchmarks/global_checkpoint_summary.md), [raw archive](output/benchmarks/global_checkpoint.json.gz), [interpretation](checkpoints/03_global_controls_and_lspi.md).
 - Global experiment source `51a999a2519ada3b95e08de9d380a1233a109bbf` was clean at launch. [Source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/37545210432) passed 59 tests and all smoke runners; final local validation adds a passing later-iteration LSPI singularity regression for 60 tests total.
 - At 32 states, dominated-bridge lifecycle cost is 32.969 ms for classical global elimination versus 96.257 ms for current pruned-local repair; anchor invalidation is 39.642 versus 835.267 ms. Local SCC still helps modular data (7.930 versus 24.282 ms lean warm SCC). Engineering choices differ; these descriptive synthetic results do not isolate locality alone.
