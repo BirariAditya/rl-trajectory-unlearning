@@ -1,13 +1,13 @@
 # Comprehensive research presentation: 18 October 2026
 
-Updated 14 October. This folder contains a **26-slide Markdown outline with speaker notes**, not a rendered PPTX. The scope covers the full work so far, with no assumed ten-minute limit. Experimental evidence is frozen through Checkpoint 04, run on 13 October. New experiments must receive their own dated report before changing presentation claims.
+Updated 14 October. This folder contains a **27-slide Markdown outline with speaker notes**, not a rendered PPTX. The scope covers the full work so far, with no assumed ten-minute limit. Experimental evidence is frozen through Checkpoint 05, run on 14 October. New experiments must receive their own dated report before changing presentation claims.
 
 ## Read and rehearse in this order
 
 1. [Learning guide](../../docs/LEARNING_GUIDE.md): problem definition, paper distinctions, equations, tabular repair, LSPI and worked counterexample. Assumes basic RL and explains the math.
-2. [Talk track](TALK_TRACK.md): all 26 slide sections, speaker notes, claim–evidence table, backup material and professor questions.
+2. [Talk track](TALK_TRACK.md): all 27 slide sections, speaker notes, claim–evidence table, backup material and professor questions.
 3. [Professor update](../../PROFESSOR_UPDATE.md): concise progress language; the top 14 October update supersedes historical material below it.
-4. Checkpoints [01](../../checkpoints/01_exact_local_repair.md), [02](../../checkpoints/02_scc_controls.md), [03](../../checkpoints/03_global_controls_and_lspi.md), and [04](../../checkpoints/04_lspi_cost.md): how each stronger comparator changed the interpretation.
+4. Checkpoints [01](../../checkpoints/01_exact_local_repair.md), [02](../../checkpoints/02_scc_controls.md), [03](../../checkpoints/03_global_controls_and_lspi.md), [04](../../checkpoints/04_lspi_cost.md), and [05](../../checkpoints/05_lspi_matched_reuse.md): how each stronger comparator changed the interpretation.
 5. [Implementation plan](../../implementation_plan.md) and [progress log](../../PROGRESS.md): what is complete, what is still a hypothesis, and which gate comes next.
 
 ## What to demonstrate
@@ -30,11 +30,11 @@ Do not run full timing matrices during the talk. Use the archived [tabular globa
 | --- | --- | --- |
 | 14 October | Freeze and cross-check evidence; prepare study material | Checkpoint 04, archive, guide, outline and current progress agree |
 | 14–15 October | Study the learner, proofs and counterexample | Explain every symbol and the difference between policy fidelity, privacy and retained return without reading notes |
-| 15–16 October | Bounded continuation experiment, if completed and validated | Equal memoization across LSPI methods; archive results separately; retain negative findings |
+| 15–16 October | Bounded continuation experiment | Completed early on 14 October: equal memoization, Checkpoint 05; retain both losing regimes |
 | 16–17 October | Rehearse the comprehensive presentation | Explain every checkpoint, its strongest control, limitations, and resulting decision; verify numeric slides against sources |
 | 18 October | Present research progress and discuss the next claim | Obtain feedback on the deletion model, strongest comparator, and proof needed before neural scale-up |
 
-Only the evidence preparation is recorded as complete. Study, rehearsal and future experiments are planned activities, not automatic scheduled jobs.
+Evidence preparation and the matched-reuse continuation are complete. Study, rehearsal and further experiments are planned activities, not automatic scheduled jobs.
 
 ## Research position to communicate
 

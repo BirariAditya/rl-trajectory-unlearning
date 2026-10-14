@@ -4,7 +4,7 @@ Last updated: 2026-10-14. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Current stage
 
-**Checkpoint 04 reached: exact LSPI compared against cached and memoized controls.** Read [the checkpoint](checkpoints/04_lspi_cost.md): 63 runs, 162 requests, 648 method executions, zero trace mismatches, and 74 passing tests. Cached memoization has the lowest request median in all seven settings; replay has the lowest training-plus-request median in two. Neither a broad efficiency advantage nor paper-level novelty is established. The tabular and LSPI systems remain the verified baseline suite. A [comprehensive presentation outline](presentation/2026-10-18/TALK_TRACK.md) and [learning guide](docs/LEARNING_GUIDE.md) cover the full research journey for 18 October. GPU experiments have not started.
+**Checkpoint 05 reached: equal policy-evaluation reuse in LSPI.** [The new comparison](checkpoints/05_lspi_matched_reuse.md) has 63 runs / 162 requests / 810 exact trace matches and 80 passing tests. Both memoized methods perform equal solve/action-score counts. Memoized replay has the lowest request and lifecycle medians in five of seven settings; it loses on the two larger switch fixtures. This conditional synthetic result does not establish novelty or a broad practical speedup. The [comprehensive presentation outline](presentation/2026-10-18/TALK_TRACK.md) and [learning guide](docs/LEARNING_GUIDE.md) cover all five checkpoints. GPU experiments have not started.
 
 ## Stage tracker
 
@@ -15,11 +15,13 @@ Last updated: 2026-10-14. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
 | Baselines and cost ledger | Lean global and classical elimination checkpoint complete | 4,158 further method executions / 108 runs; full lifecycle and scratch costs charged; external optimized FTVI is not reproduced |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
-| Frozen-feature LSPI control | Correctness and first complete-cost comparison passed | 648 matching executions; cached memoization is a strong control; matched replay memoization, numerical factorization, memory and novelty gates remain |
+| Frozen-feature LSPI control | Matched reuse comparison complete | 810 matching executions; replay lower medians in 5/7 settings with equal solves; numerical factorization, memory and novelty gates remain |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
+
+- **14 October: Checkpoint 05 complete.** 80 tests and [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38596853065) pass. Five methods, 63 runs, 162 requests, 810 exact trace matches; zero unequal memoized solve/action-score counts. Clean source `b576ee4101cecc23369cfda5848e1c2253ef59d8`; all 28 source/script hashes verified. [Report](checkpoints/05_lspi_matched_reuse.md), [tables](output/benchmarks/lspi_matched_checkpoint_summary.md), [archive](output/benchmarks/lspi_matched_checkpoint.json.gz). Replay with equal memoization has the lowest request/lifecycle medians in 5/7 settings, with two losing switch regimes preserved. No significance or novelty claim.
 
 - **14 October continuation implementation: 80 tests pass.** Added target replay with the same within-request evaluation memoization as cached reconstruction. The new five-method smoke has zero mismatches and checks equal memoized solve/action-score counts. Cycle, singularity, cancellation, invalid-request and 32 random sequential-dataset tests cover reuse. The historical four-method summary regenerates byte-for-byte; repeated timing results follow a clean source commit.
 
@@ -57,7 +59,7 @@ Last updated: 2026-10-14. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 ## Next implementation tasks
 
 1. Use the [18 October preparation plan](presentation/2026-10-18/README.md) to study the equations, reproduce the demos, and rehearse all four checkpoints. Keep historical findings and later stronger comparisons together.
-2. Match repeated-policy evaluation reuse on replay and cached reconstruction before attributing differences to target corrections. Then add stable numerical factorization controls, measured memory, long deletion sequences and conditioning/failure regimes. These are implementation gates, not novelty claims.
+2. Matched repeated-policy reuse is complete. Next add measured memory in separate passes, stable numerical factorization controls, long deletion sequences and conditioning/failure regimes. These are implementation gates, not novelty claims.
 3. State and audit a deletion-specific theorem or advantage beyond established incremental LSPI before neural scale-up. If no such claim survives, reframe as a failure/evaluation study. User-identity batches, larger real tasks and GPU experiments remain staged.
 
 ## Limitations and open decisions
@@ -73,6 +75,8 @@ Last updated: 2026-10-14. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 At the end of each implementation session, update this file with the current stage, actual commands/results, output paths, completed tasks, next tasks, and blockers. Mark a gate complete only when its evidence exists. Keep failed experiments and scope limitations visible. Do not silently upgrade a hypothesis to a result.
 
 ## Activity log
+
+- **2026-10-14 continuation:** implemented memoized replay, added six tests (80 total), pushed clean source `b576ee4`, and completed Checkpoint 05's 810 matching executions. Both methods now reuse repeated evaluations equally; conditional gains survive in five settings and fail in two. Archived results separately and expanded the presentation to 27 slide sections.
 
 - **2026-10-14:** archived Checkpoint 04 and its provenance, updated research decisions and professor summary, and prepared a comprehensive learning guide plus 26-slide outline with speaker notes, evidence links and anticipated questions for 18 October. This is Markdown presentation material, not a rendered PowerPoint deck.
 - **2026-10-13:** implemented cached and memoized LSPI controls, expanded to 74 passing tests, pushed source `475330c`, and completed 648 matching method executions. Ordinary memoization removes much of the apparent advantage over scratch; retained both favorable and unfavorable replay results.

@@ -1,10 +1,10 @@
 # Presentation talk track — trajectory unlearning in offline RL
 
-**Updated 14 October for 18 October 2026; evidence through Checkpoint 04 (experiment run 13 October).** This comprehensive, modular 26-slide Markdown outline covers all work so far, with speaker notes and evidence links. The completed LSPI cost comparison is included, with its negative findings. The companion [learning guide](../../docs/LEARNING_GUIDE.md) explains the equations more slowly. This is presentation source material, not a rendered slide deck.
+**Updated 14 October for 18 October 2026; evidence through Checkpoint 05 (experiment run 14 October).** This comprehensive, modular 27-slide Markdown outline covers all work so far, with speaker notes and evidence links. Both LSPI cost comparisons are included, with favorable and adverse results. The companion [learning guide](../../docs/LEARNING_GUIDE.md) explains the equations more slowly. This is presentation source material, not a rendered slide deck.
 
 ## Presentation contract
 
-Open with the research question and define the retained-only learner. Show the implementation and how stronger classical controls changed its interpretation. Close on the LSPI comparison and the next matched-reuse/factorization gate. The strongest demonstrated claim is **correctness relative to declared restricted learners**. We have not measured continuous-control or real-environment retained-task return, nor run a GPU experiment. A policy matching a retained empirical model is not thereby useful in the true environment.
+Open with the research question and define the retained-only learner. Show the implementation and how stronger classical controls changed its interpretation. Close on matched LSPI reuse and the next memory/factorization gate. The strongest demonstrated claim is **correctness relative to declared restricted learners**, with a conditional synthetic cost advantage after equalizing reuse. We have not measured continuous-control or real-environment retained-task return, nor run a GPU experiment. A policy matching a retained empirical model is not thereby useful in the true environment.
 
 Use these terms consistently:
 
@@ -210,7 +210,7 @@ Use these terms consistently:
 
 ### Slide 24 — Two-state worked reversal and current validation
 
-**On slide:** Full-data \((a,a)\). Delete terminal \((z,a,1)\). One-shot downdate \((b,b)\). Correct retained-only three-step LSPI \((a,b)\). Current suite: 74 tests across the repository.
+**On slide:** Full-data \((a,a)\). Delete terminal \((z,a,1)\). One-shot downdate \((b,b)\). Correct retained-only three-step LSPI \((a,b)\). Current suite: 80 tests across the repository.
 
 **Speaker notes:** The retained transition \(x\to z\) must change its successor target after \(z\) chooses \(b\). Correcting it gives \(Q(x,a)=1/18>Q(x,b)=1/24\), so \(x\) returns to \(a\). Direct scratch assembly and replay match every matrix, RHS, weight, and policy in tested finite schedules, including switches, cycles, ties, sequential deletion, and singular rejection without partial commit. Both share the schedule and solver. The next slide shows the completed four-method cost comparison. Incremental inverse/refactorization and measured memory remain untested. The teaching example has three iterations; the cost benchmark declares four.
 
@@ -230,13 +230,26 @@ Use these terms consistently:
 
 **Evidence:** [Checkpoint 04 and provenance](../../checkpoints/04_lspi_cost.md), [complete tables](../../output/benchmarks/lspi_checkpoint_summary.md), [cached implementation](../../src/rl_unlearning/lspi_baselines.py), [tests and CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38338893080).
 
+### Slide 26 — Checkpoint 05: equalize evaluation reuse
+
+**On slide:** 80 tests. 63 runs / 162 requests / 810 exact trace matches. Both memoized methods use equal solve/action-score counts. Memoized replay has the lowest request and lifecycle medians in 5/7 settings; two larger switch fixtures lose.
+
+| Setting | Cached memo request | Replay memo request | Cached memo lifecycle | Replay memo lifecycle |
+| --- | ---: | ---: | ---: | ---: |
+| Shared: 128 transitions, 8 features | 7.766 ms | 6.468 ms | 58.306 ms | 50.185 ms |
+| Switch: 640 transitions, 4 features | 5.005 ms | 6.320 ms | 45.685 ms | 52.715 ms |
+
+**Speaker notes:** The preceding comparison gave cached reconstruction repeated-policy memoization but not replay. We now give replay the same cache policy, reset per deletion, while preserving every finite-schedule iterate. In shared settings both methods use two solves; cached reconstruction has 12 target terms versus 3–4 replay corrections. Conditional gains survive equal solve counts, but larger switch fixtures still lose despite fewer corrections. Preparation and zero-group handling differ, so this does not isolate every assembly operation. Compare methods within this experiment, not absolute milliseconds against the previous session. Every timed request reaches a fixed point; failure and cycle cases are separately unit-tested. These are descriptive rational synthetic results with no memory, stable numerical factorization, significance or novelty claim.
+
+**Evidence:** [Checkpoint 05](../../checkpoints/05_lspi_matched_reuse.md), [complete tables](../../output/benchmarks/lspi_matched_checkpoint_summary.md), [reuse invariant](../../audits/lspi_matched_reuse.md), [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38596853065).
+
 ## Module F — Research decision
 
-### Slide 26 — What we can defend on 18 October
+### Slide 27 — What we can defend on 18 October
 
-**On slide:** (1) Precise retained-only target. (2) Tested exact tabular policy/value and finite LSPI-trace equality. (3) Stronger classical controls weaken both speed stories. (4) Match reuse and numerical factorization before seeking a deletion-specific advantage.
+**On slide:** (1) Precise retained-only target. (2) Tested exact tabular policy/value and finite LSPI-trace equality. (3) Stronger controls expose failure regimes; equal reuse preserves a conditional LSPI gain. (4) Measure memory and compare numerical factorization before advancing a deletion-specific claim.
 
-**Speaker notes:** The next controlled experiment should give both assembly methods equal repeated-policy reuse. Then add stable numerical factorization, measured memory, longer deletion sequences and conditioning/failure sweeps. Charge all preparation and fallback. These are stronger controls, not novelty by themselves. A paper claim must add a substantive deletion-specific guarantee or advantage beyond established incremental LSPI. If it does not survive, reframe the question. GPU experiments remain conditional and have not measured retained-task return or privacy. Ask the advisor which learner, deletion model and theorem would make the work compelling. Do not assert conference acceptance probability or a finished new algorithm.
+**Speaker notes:** Equal repeated-policy reuse is now complete. Next add measured memory in separate passes, stable numerical factorization, longer deletion sequences and conditioning/failure sweeps. Charge all preparation and fallback. These are stronger controls, not novelty by themselves. A paper claim must add a substantive deletion-specific guarantee or advantage beyond established incremental LSPI. If it does not survive, reframe the question. GPU experiments remain conditional and have not measured retained-task return or privacy. Ask the advisor which learner, deletion model and theorem would make the work compelling. Do not assert conference acceptance probability or a finished new algorithm.
 
 **Evidence:** [Progress next steps](../../PROGRESS.md#next-implementation-tasks), [Checkpoint 03 updated phases](../../checkpoints/03_global_controls_and_lspi.md#updated-research-phases).
 
@@ -250,6 +263,7 @@ Use these terms consistently:
 | LSPI replay matches direct retained-only finite schedules and one-shot deletion can be wrong | [LSPI example](../../checkpoints/lspi_control_example.md), [contract](../../audits/lspi_control_contract.md), [tests](../../tests/test_lspi_control.py) | Correctness, no established efficiency or novelty |
 | A real-environment utility or neural privacy result exists | **No evidence yet** | Do not claim |
 | Memoized caching has the lowest request median in 7/7 settings; replay has the lowest lifecycle median in 2/7 | [Checkpoint 04](../../checkpoints/04_lspi_cost.md), [tables](../../output/benchmarks/lspi_checkpoint_summary.md) | Descriptive small rational timings; reuse is not matched, memory and factorization remain unmeasured |
+| With equal reuse, memoized replay has the lowest request and lifecycle medians in 5/7 settings | [Checkpoint 05](../../checkpoints/05_lspi_matched_reuse.md), [tables](../../output/benchmarks/lspi_matched_checkpoint_summary.md) | Conditional engineering gain; two larger switch fixtures lose; not novelty or significance |
 
 ## Optional backup slides
 
@@ -277,7 +291,7 @@ Use these terms consistently:
 
 **“Do the timing ratios prove significance?”** No. Three dataset seeds and timing repeats on those datasets are descriptive. The models are small and synthetic. The ratios are useful to expose failure regimes, not to estimate general deployment performance.
 
-**“What would change the conclusion before the talk?”** A new, separately archived experiment with equal memoization on both assembly paths, followed by strong numerical factorization and memory controls. Checkpoint 04 is complete and limits the current claim. Further engineering gains would still need a focused novelty argument.
+**“What would change the conclusion before the talk?”** A new, separately archived numerical factorization and memory comparison, with adverse conditioning and longer deletion streams. Equal memoization is already complete in Checkpoint 05; it shows conditional gains but two losing regimes. Further engineering gains would still need a focused novelty argument.
 
 ## Speaker claim-control card
 
@@ -288,7 +302,7 @@ Use these terms consistently:
 | “Zero mismatches in tested executions” | “Benchmark proves correctness for all models” |
 | “Constructed regime, descriptive median” | “Universal or statistically significant speedup” |
 | “Classical elimination beat our current local method over these lifecycles” | Hiding that result behind request-only numbers |
-| “Memoized caching wins request medians; replay wins two lifecycle medians in this pilot” | Universal speedup or an acceptance estimate |
+| “With equal reuse, memoized replay wins five settings and loses two in this pilot” | Universal speedup or an acceptance estimate |
 
 ## Presenter study order
 
@@ -296,4 +310,4 @@ Use these terms consistently:
 2. Run the [tabular demo](../../scripts/run_tabular_demo.py) and [LSPI demo](../../scripts/run_lspi_demo.py).
 3. Read [Checkpoint 01](../../checkpoints/01_exact_local_repair.md), [02](../../checkpoints/02_scc_controls.md), and [03](../../checkpoints/03_global_controls_and_lspi.md) in order; explain how each comparator changed the story.
 4. Verify all numeric slides directly in the [global table](../../output/benchmarks/global_checkpoint_summary.md) and [LSPI fixture](../../checkpoints/lspi_control_example.md).
-5. Read [Checkpoint 04](../../checkpoints/04_lspi_cost.md) and verify Slide 25 in its archived tables. Before 18 October, check [PROGRESS.md](../../PROGRESS.md) for any later validated checkpoint and retain the negative findings.
+5. Read [Checkpoint 04](../../checkpoints/04_lspi_cost.md) and [05](../../checkpoints/05_lspi_matched_reuse.md), then verify Slides 25–26 in their separate archived tables. Before 18 October, check [PROGRESS.md](../../PROGRESS.md) for any later validated checkpoint and retain the negative findings.

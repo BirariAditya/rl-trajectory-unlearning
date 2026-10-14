@@ -4,13 +4,15 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
+**14 October continuation decision:** [Checkpoint 05](checkpoints/05_lspi_matched_reuse.md) completes equal repeated-policy reuse ahead of the planned continuation window. The five-method matrix has 810 exact matches, 80 passing tests, and equal memoized solve/action-score counts. Memoized replay has lower request and lifecycle medians in five of seven settings, losing on the two larger switch fixtures. Keep this conditional finding and both failure regimes. The next experimental gate is separately measured memory, numerical factorization/conditioning and longer deletion sequences; a useful deletion-specific theorem remains unproved. Compare costs within each recorded session, not absolute milliseconds across Checkpoints 04 and 05.
+
 **14 October decision, superseding the earlier next steps:** [Checkpoint 04](checkpoints/04_lspi_cost.md) completes the first four-method LSPI cost matrix: 74 passing tests, 63 runs, 162 requests and 648 matching executions. Cached memoization wins request medians in all seven settings; replay wins lifecycle medians in two. Keep both as baselines. The next controlled implementation is equal repeated-policy reuse on both assembly paths, followed by numerical factorization, memory and adverse-conditioning comparisons. No new algorithm or useful deletion-time theorem is established. The dated preparation phases below govern work through the presentation; the original week-based phases remain the longer research roadmap.
 
 | Date / phase | Deliverable and acceptance gate | Status |
 | --- | --- | --- |
 | 13–14 October: freeze evidence | Archive all LSPI costs and source manifest; reconcile claims, progress and study notes | Completed, Checkpoint 04 |
 | 14–15 October: understand and explain | Work through the tabular and two-state LSPI demos; explain every equation and why stronger baselines changed conclusions | Guide and speaker notes prepared; presenter walkthrough remains |
-| 15–16 October: targeted continuation | Match memoization across assembly methods; add only a bounded experiment with exact trace checks and complete cost reporting | Planned, no result yet |
+| 15–16 October: targeted continuation | Match memoization across assembly methods; add only a bounded experiment with exact trace checks and complete cost reporting | Completed early on 14 October: Checkpoint 05; further expansion requires a separate archive |
 | 16–17 October: presentation freeze | Reconcile every numeric claim with archived evidence; rehearse comprehensive story and professor questions | Outline prepared; rehearsal remains |
 | 18 October: present and choose next gate | Present the full journey, including negative results; agree on the learner, baseline and proof needed for a paper claim | Planned |
 | After presentation: numerical / novelty gate | Stable factorization, memory and conditioning controls; focused prior-art/theorem audit before neural scale-up | Not started |

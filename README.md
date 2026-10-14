@@ -1,8 +1,8 @@
 # RL trajectory unlearning research
 
-**Current stage:** [Checkpoint 04 reached](checkpoints/04_lspi_cost.md): 74 passing tests and 648 exact LSPI trace matches across four methods. Ordinary cached memoization has the lowest request median in all seven settings; target replay has the lowest full-lifecycle median in two. No broad speed or novelty claim is established. See [PROGRESS.md](PROGRESS.md).
+**Current stage:** [Checkpoint 05 reached](checkpoints/05_lspi_matched_reuse.md): 80 passing tests and 810 exact LSPI trace matches across five methods. With equal policy-evaluation reuse, memoized target replay has the lowest request and lifecycle medians in five of seven settings; it loses on two larger switch fixtures. No broad practical speed or novelty claim is established. See [PROGRESS.md](PROGRESS.md).
 
-For the comprehensive 18 October presentation, start with the [learning guide](docs/LEARNING_GUIDE.md), [26-slide outline and speaker notes](presentation/2026-10-18/TALK_TRACK.md), and [preparation plan](presentation/2026-10-18/README.md).
+For the comprehensive 18 October presentation, start with the [learning guide](docs/LEARNING_GUIDE.md), [27-slide outline and speaker notes](presentation/2026-10-18/TALK_TRACK.md), and [preparation plan](presentation/2026-10-18/README.md).
 
 This project is located at `C:\Users\adity\Research`. Start with the [literature review](literature_review.md), then the [novelty reassessment](novelty_reassessment.md) and revised [implementation plan](implementation_plan.md). The [audits](audits/) cover prior art, proof contracts, theorem risks, and the GPU route. The implemented learners are explicit offline tabular baselines: empirical-model value iteration and rational exact policy iteration. Structural/pruned exact repair is implemented; the general margin-sensitive theorem and LSPI-control bridge remain research tasks.
 

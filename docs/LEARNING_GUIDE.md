@@ -1,6 +1,6 @@
 # Learning guide: trajectory deletion in offline reinforcement learning
 
-**Status: 14 October 2026; latest experiment run 13 October.** This is a study companion to the implemented repository, not a claim that a publishable new algorithm has been established. The latest completed LSPI cost experiment is summarized in [Checkpoint 04](../checkpoints/04_lspi_cost.md). It strengthens the correctness evidence and finds that an ordinary memoized cached baseline has the lowest request median in all seven settings. Start with this guide, run the tiny demos, and use the linked contracts when a proof detail matters.
+**Status: 14 October 2026; evidence through Checkpoint 05.** This is a study companion to the implemented repository, not a claim that a publishable new algorithm has been established. [Checkpoint 04](../checkpoints/04_lspi_cost.md) exposed a strong cached baseline. [Checkpoint 05](../checkpoints/05_lspi_matched_reuse.md) gives both methods equal policy-evaluation reuse; memoized replay then has the lowest request/lifecycle medians in five of seven settings. Start with this guide, run the tiny demos, and use the linked contracts when a proof detail matters.
 
 ## 1. The question in one minute
 
@@ -193,6 +193,16 @@ The memoized cached method has the lowest **request** median in all seven settin
 
 The comparisons still omit an incremental inverse/factorization baseline, measured cache memory, large-dimensional floating-point conditioning, and neural or GPU experiments. Within this checkpoint all methods use dense exact rational solves; selected operation counters omit copy/allocation and rational-number bit complexity. The safe conclusion is that target-switch replay is **correct**, but ordinary cached reconstruction and memoization are strong competitors that limit the present efficiency/novelty claim.
 
+### Checkpoint 05: give both methods the same optimization
+
+Checkpoint 04's replay path solved the matrix every iteration while the memoized cached path reused evaluations of repeated policies. That difference could hide the value of target corrections. `LSPIReplayMemoizedState` now uses the same evaluation cache as cached reconstruction: cache entries live for one request, action scores and every trace entry remain, and the cache resets after deletion.
+
+The replay method's mutable assembly matrix stays associated with its last **actually assembled** policy. A cache hit returns an immutable saved result without moving either that matrix or its associated policy. Any subsequent correction is computed from that matching pair. This distinction avoids treating a cached trace entry as if the underlying mutable matrix had also been updated. See [the contract](../audits/lspi_matched_reuse.md).
+
+The new comparison has **80 passing tests, 63 runs, 162 requests and 810 exact trace matches**. Both memoized methods perform equal solve and action-score counts in every request. Replay now has the lowest request and lifecycle medians in five of seven settings. For 128 transitions and eight features, request medians are 6.468 ms for memoized replay and 7.766 ms for memoized cached reconstruction; full lifecycles are 50.185 and 58.306 ms. For the 640-transition switch fixture, replay loses: 6.320 versus 5.005 ms per request and 52.715 versus 45.685 ms per lifecycle. [The report](../checkpoints/05_lspi_matched_reuse.md) includes all settings and provenance.
+
+The shared settings use two solves for both methods, with 3–4 replay corrections versus 12 reconstruction terms. This explains a reduction in one component of work; it does not prove that component causes the entire measured latency difference. Preparation, zero-group handling and other overhead still differ. The larger switch cases lose despite fewer corrections. These are descriptive rational synthetic results, not a novelty, significance or neural result. Compare methods within this run; absolute milliseconds from different sessions cannot establish an improvement.
+
 ## 8. How to reproduce and inspect the code
 
 Run these from the repository root, C:\Users\adity\Research, with Python 3.10 or newer. The current package uses only the standard library. The commands below are documented in the [README](../README.md).
@@ -205,6 +215,8 @@ python scripts/run_global_checkpoint.py --output results/global_checkpoint.json.
 python scripts/summarize_global_checkpoint.py results/global_checkpoint.json.gz
 python scripts/run_lspi_checkpoint.py --output results/lspi_checkpoint.json.gz
 python scripts/summarize_lspi_checkpoint.py results/lspi_checkpoint.json.gz
+python scripts/run_lspi_checkpoint.py --matched-reuse --output results/lspi_matched_checkpoint.json.gz
+python scripts/summarize_lspi_checkpoint.py results/lspi_matched_checkpoint.json.gz
 ~~~
 
 The full global and LSPI benchmarks can take time; begin with the two demos and tests. The archived [global summary](../output/benchmarks/global_checkpoint_summary.md), [global raw report](../output/benchmarks/global_checkpoint.json.gz), and [LSPI summary](../output/benchmarks/lspi_checkpoint_summary.md) let you inspect completed checkpoints without rerunning them. The project records source revision/hashes and dataset/deletion sequences in benchmark artifacts. If current code has changed since those archives, do not present a new run as the same frozen checkpoint without checking its manifest.
@@ -213,7 +225,7 @@ Read code in this order: [data.py](../src/rl_unlearning/data.py) and [tabular.py
 
 ## 9. What is still research, and what to study next
 
-The **first complete-cost LSPI comparison is complete**: direct scratch assembly, cached sufficient-statistic reconstruction, memoized cached reconstruction, and target-correction replay were measured across seven small synthetic settings. It did not establish a general replay advantage. The next comparison should add a genuine incremental inverse/refactorization baseline, measured cache memory, larger feature dimensions, conditioning/failure sweeps, and floating-point behavior. Charge original preparation, deleted-sample processing, matrix copies, all policy scans, group checks, solves, memory, and failure handling. A win only over naive per-transition scratch is insufficient. The [progress log](../PROGRESS.md) and [Checkpoint 04 summary](../output/benchmarks/lspi_checkpoint_summary.md) are the evidence for the current state.
+Both the first cost comparison and **matched policy-evaluation reuse comparison are complete**. The latter finds a conditional replay benefit but two losing regimes. The next comparison should add a genuine incremental inverse/refactorization baseline, measured cache memory, larger feature dimensions, conditioning/failure sweeps, and floating-point behavior. Charge original preparation, deleted-sample processing, matrix copies, all policy scans, group checks, solves, memory, and failure handling. A win only over naive per-transition scratch is insufficient. The [progress log](../PROGRESS.md) and [Checkpoint 05 summary](../output/benchmarks/lspi_matched_checkpoint_summary.md) are the evidence for the current state.
 
 GPU experiments remain conditional. A later IQL/other deep offline-RL study would need multiple independent retained-data retrains, strong fine-tuning and TrajDeleter baselines, matched deletion/non-member controls, retained return, policy distance, several audits, and GPU-hour accounting. The tabular and fixed-feature exactness arguments do not transfer automatically to a learned neural encoder.
 
