@@ -1,6 +1,8 @@
 # RL trajectory unlearning research
 
-**Current stage:** [Checkpoint 03 reached](checkpoints/03_global_controls_and_lspi.md): lean global/action-elimination controls, 60 passing tests, and 4,158 additional failure-free executions. Strong classical planning undermines the tabular novelty claim. Exact fixed-feature LSPI replay is implemented; its complete-cost and prior-art gates are the next priority. See [PROGRESS.md](PROGRESS.md).
+**Current stage:** [Checkpoint 04 reached](checkpoints/04_lspi_cost.md): 74 passing tests and 648 exact LSPI trace matches across four methods. Ordinary cached memoization has the lowest request median in all seven settings; target replay has the lowest full-lifecycle median in two. No broad speed or novelty claim is established. See [PROGRESS.md](PROGRESS.md).
+
+For the comprehensive 18 October presentation, start with the [learning guide](docs/LEARNING_GUIDE.md), [26-slide outline and speaker notes](presentation/2026-10-18/TALK_TRACK.md), and [preparation plan](presentation/2026-10-18/README.md).
 
 This project is located at `C:\Users\adity\Research`. Start with the [literature review](literature_review.md), then the [novelty reassessment](novelty_reassessment.md) and revised [implementation plan](implementation_plan.md). The [audits](audits/) cover prior art, proof contracts, theorem risks, and the GPU route. The implemented learners are explicit offline tabular baselines: empirical-model value iteration and rational exact policy iteration. Structural/pruned exact repair is implemented; the general margin-sensitive theorem and LSPI-control bridge remain research tasks.
 
@@ -17,6 +19,8 @@ python scripts/summarize_scc_checkpoint.py results/scc_checkpoint.json.gz
 python scripts/run_global_checkpoint.py --output results/global_checkpoint.json.gz
 python scripts/summarize_global_checkpoint.py results/global_checkpoint.json.gz
 python scripts/run_lspi_demo.py --output results/lspi_demo.json
+python scripts/run_lspi_checkpoint.py --seeds 0 1 2 --repeats 3 --output results/lspi_checkpoint.json.gz
+python scripts/summarize_lspi_checkpoint.py results/lspi_checkpoint.json.gz
 ```
 
 The package is at `src/rl_unlearning`. It currently uses only the Python standard library. `delete_and_repair` removes specified trajectories, tries local Bellman backups, checks the retained-model residual and action gaps, and falls back to full warm-started value iteration when it cannot certify the policy. The returned `RepairResult` reports local backups and full residual checks separately.
@@ -36,3 +40,5 @@ Set `solver="scc"` on `LocalPolicyRepair` to use exact policy iteration componen
 `ExactGlobalPlanner` supplies lean full-planning controls without a local reverse index; optional strict-bound action elimination applies inside the SCC graph and refreshes invalidated anchor values. The global runner charges original training and all subsequent requests for every method, including scratch. [Its contract](audits/global_elimination_contract.md) explains differences from the legacy pruned-local implementation.
 
 `LSPIReplayState` and `scratch_lspi` implement a declared finite fixed-feature LSPI schedule with exact rational arithmetic. Deletion replay corrects retained successor-policy targets and matches scratch matrices, weights and policies. Run the [worked example](checkpoints/lspi_control_example.md) to see a one-shot downdate produce the wrong final action. Singular requests do not commit; cycles remain explicit finite-schedule outputs. This is a correctness prototype with dense solves, not an efficiency or novelty result.
+
+`LSPICachedState` reconstructs each matrix from retained C/b/G sufficient statistics. `LSPIMemoizedState` additionally reuses evaluations of repeated policies within one request, clearing its evaluation cache at each deletion. The LSPI runner compares all four methods with preparation and original training charged. Its [archived results](output/benchmarks/lspi_checkpoint_summary.md) cover small synthetic rational problems; incremental inverse/factorization, memory profiling and practical numerical scale remain future comparisons.

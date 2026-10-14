@@ -4,6 +4,19 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
+**14 October decision, superseding the earlier next steps:** [Checkpoint 04](checkpoints/04_lspi_cost.md) completes the first four-method LSPI cost matrix: 74 passing tests, 63 runs, 162 requests and 648 matching executions. Cached memoization wins request medians in all seven settings; replay wins lifecycle medians in two. Keep both as baselines. The next controlled implementation is equal repeated-policy reuse on both assembly paths, followed by numerical factorization, memory and adverse-conditioning comparisons. No new algorithm or useful deletion-time theorem is established. The dated preparation phases below govern work through the presentation; the original week-based phases remain the longer research roadmap.
+
+| Date / phase | Deliverable and acceptance gate | Status |
+| --- | --- | --- |
+| 13–14 October: freeze evidence | Archive all LSPI costs and source manifest; reconcile claims, progress and study notes | Completed, Checkpoint 04 |
+| 14–15 October: understand and explain | Work through the tabular and two-state LSPI demos; explain every equation and why stronger baselines changed conclusions | Guide and speaker notes prepared; presenter walkthrough remains |
+| 15–16 October: targeted continuation | Match memoization across assembly methods; add only a bounded experiment with exact trace checks and complete cost reporting | Planned, no result yet |
+| 16–17 October: presentation freeze | Reconcile every numeric claim with archived evidence; rehearse comprehensive story and professor questions | Outline prepared; rehearsal remains |
+| 18 October: present and choose next gate | Present the full journey, including negative results; agree on the learner, baseline and proof needed for a paper claim | Planned |
+| After presentation: numerical / novelty gate | Stable factorization, memory and conditioning controls; focused prior-art/theorem audit before neural scale-up | Not started |
+
+See the [presentation preparation plan](presentation/2026-10-18/README.md). These dates are work priorities, not scheduled automatic runs.
+
 **7 October decision:** [Checkpoint 03](checkpoints/03_global_controls_and_lspi.md) completed 4,158 global-control executions with exact agreement and 60 passing tests. Classical elimination is cheaper over full bridge/anchor-invalidation lifecycles than the current pruned-local method. Keep Track A as a reference and prioritize Track B's efficiency/novelty gate. Its prototype exactly replays the declared finite LSPI schedule from a data-independent initial policy, including switches, shared features, cycles and singularity. [The worked example](checkpoints/lspi_control_example.md) shows why one-shot subtraction is insufficient. Next compare scratch, cached-statistic, target-correction, and incremental-solve baselines with full preparation/copy/policy-scan costs; a matrix identity or win over a weak scratch baseline is not enough. GPU work stays conditional on that gate.
 
 **5 October update:** [Checkpoint 02](checkpoints/02_scc_controls.md) is complete: exact SCC planning, six stress regimes, 42 passing tests, and 5,688 method executions with exact policy/value agreement. The matched SCC control substantially narrows the modular-case advantage; weak bridges, anchor invalidation, and dense influence do not favor pruning. [FTVI explicitly combines action elimination and smaller components](https://arxiv.org/abs/1401.3910), so that combination is not a viable novelty claim by itself. Next add a lean global planner without repair-index overhead and matched action elimination, then decide whether a deletion-specific work theorem survives or Track B should become primary. The SCC solver is a controlled internal baseline, not an FTVI reproduction or a mature optimized planner; see [its contract](audits/scc_planning_checkpoint.md).

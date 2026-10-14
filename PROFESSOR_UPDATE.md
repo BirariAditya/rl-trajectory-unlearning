@@ -1,10 +1,12 @@
 # Research update: trajectory unlearning in offline RL
 
-**Prepared:** 3 October 2026  
+**Updated:** 14 October 2026 (older updates preserved below)
 **Repository:** [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private)  
-**Code checkpoint:** `867e00a` (documentation update; experimental results below are from the recorded 29 September checkpoint)
+**Latest experimental source:** `475330c` (Checkpoint 04, 13 October); historical updates identify their earlier evidence below.
 
 ## Ready-to-send update
+
+**Latest update, 14 October:** We now have a complete first fixed-feature LSPI comparison: 74 passing tests, 63 experiment runs, 162 deletion requests and 648 method executions with zero exact matrix/weight/policy-trace mismatches against retained-only training. We added two stronger conventional controls: cached sufficient-statistic reconstruction and reuse of repeated policy evaluations within each deletion request. The memoized control has the lowest request-time median in all seven settings; our target-correction replay has the lowest training-plus-deletion median in two settings. This limits our current efficiency claim and does not establish novelty. Our useful outputs are a precise counterfactual target, tested tabular and fixed-feature implementations, a concrete example where one-shot deletion gives the wrong control policy, and reproducible evidence showing why weak scratch baselines can mislead. The next gate is a matched reuse/factorization comparison and a deletion-specific result beyond established incremental LSPI. No GPU, neural privacy or real-environment return result is claimed. [Checkpoint 04](checkpoints/04_lspi_cost.md), the [learning guide](docs/LEARNING_GUIDE.md), and the [comprehensive talk outline](presentation/2026-10-18/TALK_TRACK.md) contain the current evidence and explanations.
 
 **Latest update, 7 October:** Checkpoint 03 completed 108 runs, 594 requests and 4,158 method executions with zero exact policy/value mismatches; 60 tests pass. Lean global planning now pays no local-index overhead, and classical action elimination outperforms our current pruned-local implementation on total bridge and anchor-invalidation costs. I am retaining the tabular system as a reference and prioritizing fixed-feature LSPI. Its first prototype exactly reproduces retained-only matrices, weights and policy iterates; a two-state example shows why sample subtraction alone gives the wrong control policy after successor actions change. The next gate is efficiency against cached/incremental LSPI with preparation, scans and solves fully counted. This is progress in correctness and research direction, not yet a new publishable algorithm. [Checkpoint 03](checkpoints/03_global_controls_and_lspi.md) and [the LSPI example](checkpoints/lspi_control_example.md) contain the evidence. Earlier updates below are historical.
 

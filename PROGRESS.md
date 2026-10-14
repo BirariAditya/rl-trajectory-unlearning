@@ -1,10 +1,10 @@
 # Research progress
 
-Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
+Last updated: 2026-10-14. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
 
 ## Current stage
 
-**Checkpoint 03 reached: lean global/action-elimination controls and exact LSPI replay validated.** Read [the checkpoint](checkpoints/03_global_controls_and_lspi.md). Classical elimination beats the current pruned-local implementation on bridge and anchor-invalidation lifecycle cost. The tabular mechanism is retained as a reference, and fixed-feature LSPI is the next research priority. Its finite-schedule replay matches retained-only matrices/weights/policies, but efficiency against strong incremental baselines and paper-level novelty remain open. GPU experiments have not started.
+**Checkpoint 04 reached: exact LSPI compared against cached and memoized controls.** Read [the checkpoint](checkpoints/04_lspi_cost.md): 63 runs, 162 requests, 648 method executions, zero trace mismatches, and 74 passing tests. Cached memoization has the lowest request median in all seven settings; replay has the lowest training-plus-request median in two. Neither a broad efficiency advantage nor paper-level novelty is established. The tabular and LSPI systems remain the verified baseline suite. A [comprehensive presentation outline](presentation/2026-10-18/TALK_TRACK.md) and [learning guide](docs/LEARNING_GUIDE.md) cover the full research journey for 18 October. GPU experiments have not started.
 
 ## Stage tracker
 
@@ -15,13 +15,14 @@ Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
 | Baselines and cost ledger | Lean global and classical elimination checkpoint complete | 4,158 further method executions / 108 runs; full lifecycle and scratch costs charged; external optimized FTVI is not reproduced |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
-| Frozen-feature LSPI control | Initial correctness gate passed | Exact finite-schedule replay, target-switch counterexample, cycles/singularity; next complete-cost and incremental-baseline comparison |
+| Frozen-feature LSPI control | Correctness and first complete-cost comparison passed | 648 matching executions; cached memoization is a strong control; matched replay memoization, numerical factorization, memory and novelty gates remain |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
 
-- **13 October implementation checkpoint: 74 tests pass.** Added cached C/b/G reconstruction and within-request repeated-policy evaluation memoization as stronger LSPI controls. The four-method smoke compares every exact trace; full repeated cost matrix is next. Preparing comprehensive learning/presentation documentation for 18 October.
+- **13 October experiment; 14 October documentation: Checkpoint 04 complete.** 74 tests and [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38338893080) pass. Four methods across 63 runs / 162 requests / 648 executions have zero exact trace mismatches. [Tables](output/benchmarks/lspi_checkpoint_summary.md), [raw archive](output/benchmarks/lspi_checkpoint.json.gz), [interpretation](checkpoints/04_lspi_cost.md). All timed requests reach fixed points; cycles/singular rejection are unit-tested, not timed here.
+- Source `475330cc3795e016d55babe089d398dded542aee` has 28 recorded source/script hashes, all verified unchanged after execution. The report correctly retains `git_dirty=true` because untracked presentation/guide documentation existed at launch. Memoized caching wins request medians in 7/7 settings; replay wins lifecycle medians in 2/7. Small synthetic rational timings are descriptive; memory, incremental inverse/factorization and GPU comparisons are not measured.
 
 - **60 tests pass; Checkpoint 03 complete.** Global comparison: 108 runs / 594 requests / 4,158 method executions, zero policy/value mismatches. Six regimes, 16/32 states, three dataset seeds and three timing repeats. [Tables](output/benchmarks/global_checkpoint_summary.md), [raw archive](output/benchmarks/global_checkpoint.json.gz), [interpretation](checkpoints/03_global_controls_and_lspi.md).
 - Global experiment source `51a999a2519ada3b95e08de9d380a1233a109bbf` was clean at launch. [Source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/37545210432) passed 59 tests and all smoke runners; final local validation adds a passing later-iteration LSPI singularity regression for 60 tests total.
@@ -53,9 +54,9 @@ Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Next implementation tasks
 
-1. Prioritize fixed-feature LSPI complete-cost experiments: compare scratch assembly, cached-statistic reconstruction, target-correction replay and incremental/refactorized solves under the same finite schedule.
-2. Vary retained sample count, feature dimension, successor groups, deletion size and policy switches; include copies, full policy scans, conditioning/failure, storage and preparation. Demonstrate more than an advantage over per-sample scratch.
-3. Audit whether any proposed switch/deletion-dependent work theorem goes beyond incremental LSPI. If not, reframe before neural scale-up. Keep tabular code as a reference; user-identity batches, larger real tasks and GPU experiments remain staged.
+1. Use the [18 October preparation plan](presentation/2026-10-18/README.md) to study the equations, reproduce the demos, and rehearse all four checkpoints. Keep historical findings and later stronger comparisons together.
+2. Match repeated-policy evaluation reuse on replay and cached reconstruction before attributing differences to target corrections. Then add stable numerical factorization controls, measured memory, long deletion sequences and conditioning/failure regimes. These are implementation gates, not novelty claims.
+3. State and audit a deletion-specific theorem or advantage beyond established incremental LSPI before neural scale-up. If no such claim survives, reframe as a failure/evaluation study. User-identity batches, larger real tasks and GPU experiments remain staged.
 
 ## Limitations and open decisions
 
@@ -70,6 +71,9 @@ Last updated: 2026-10-07. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 At the end of each implementation session, update this file with the current stage, actual commands/results, output paths, completed tasks, next tasks, and blockers. Mark a gate complete only when its evidence exists. Keep failed experiments and scope limitations visible. Do not silently upgrade a hypothesis to a result.
 
 ## Activity log
+
+- **2026-10-14:** archived Checkpoint 04 and its provenance, updated research decisions and professor summary, and prepared a comprehensive learning guide plus 26-slide outline with speaker notes, evidence links and anticipated questions for 18 October. This is Markdown presentation material, not a rendered PowerPoint deck.
+- **2026-10-13:** implemented cached and memoized LSPI controls, expanded to 74 passing tests, pushed source `475330c`, and completed 648 matching method executions. Ordinary memoization removes much of the apparent advantage over scratch; retained both favorable and unfavorable replay results.
 
 - **2026-10-07:** completed Checkpoint 03 with 4,158 failure-free global-control executions, 60 passing tests, and exact fixed-feature LSPI replay. Added later-iteration singularity atomicity regression and archived the one-shot-downdate counterexample. Strong classical controls undermine the current tabular headline; moved next research priority to LSPI efficiency/prior-art gates while retaining explicit novelty limits.
 
