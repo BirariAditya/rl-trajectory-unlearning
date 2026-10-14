@@ -18,10 +18,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from run_baselines import git
 from rl_unlearning import Trajectory, Transition
-from rl_unlearning.lspi_control import LSPIProblem, LSPIReplayState, scratch_lspi
+from rl_unlearning.lspi_control import LSPIProblem, LSPIReplayState, LSPIReplayMemoizedState, scratch_lspi
 from rl_unlearning.lspi_baselines import LSPICachedState, LSPIMemoizedState
 
 METHODS = ("scratch", "cached", "cached_memo", "target_replay")
+MATCHED_METHODS = METHODS + ("target_replay_memo",)
 CASES = (("switch", 1, 4), ("switch", 32, 4), ("switch", 128, 4),
          ("shared", 16, 4), ("shared", 64, 4), ("shared", 256, 4), ("shared", 64, 8))
 
@@ -75,10 +76,10 @@ def record(result):
                 trace_sha256=hashlib.sha256(repr(signature(result)).encode()).hexdigest())
 
 
-def run(regime, count, dimension, seed, repeat):
+def run(regime, count, dimension, seed, repeat, methods=METHODS):
     problem, logs, requests = dataset(regime, count, dimension, seed)
     rng, engines, preparation = random.Random(seed * 1000 + repeat), {}, {}
-    order = list(METHODS)
+    order = list(methods)
     rng.shuffle(order)
     initial = {}
     for method in order:
@@ -87,7 +88,8 @@ def run(regime, count, dimension, seed, repeat):
             result = scratch_lspi(problem, logs)
         else:
             cls = {"cached": LSPICachedState, "cached_memo": LSPIMemoizedState,
-                   "target_replay": LSPIReplayState}[method]
+                   "target_replay": LSPIReplayState,
+                   "target_replay_memo": LSPIReplayMemoizedState}[method]
             engines[method] = cls(problem, logs)
             result = engines[method].replay()
         preparation[method] = perf_counter() - started
@@ -107,10 +109,14 @@ def run(regime, count, dimension, seed, repeat):
                 result = engines[method].delete_and_replay(request)
             timings[method] = perf_counter() - started
             results[method] = result
-        methods = {m: dict(**record(r), seconds=timings[m],
+        method_records = {m: dict(**record(r), seconds=timings[m],
                            exact_trace_match=signature(r) == signature(results["scratch"]))
                    for m, r in results.items()}
-        records.append(dict(step=step, deletion_ids=request, method_order=list(order), methods=methods))
+        if "target_replay_memo" in results:
+            for field in ("linear_solves", "action_scores"):
+                if getattr(results["target_replay_memo"].work, field) != getattr(results["cached_memo"].work, field):
+                    raise AssertionError(f"memoized work mismatch: {field}")
+        records.append(dict(step=step, deletion_ids=request, method_order=list(order), methods=method_records))
         if results["scratch"].status != "singular":
             removed = set(request)
             retained = tuple(t for t in retained if t.trajectory_id not in removed)
@@ -129,21 +135,27 @@ def main():
     parser.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--smoke", action="store_true")
-    parser.add_argument("--output", type=Path, default=ROOT / "results/lspi_checkpoint.json.gz")
+    parser.add_argument("--matched-reuse", action="store_true",
+                        help="Add target replay with the same within-request policy memoization as cached LSPI")
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if args.repeats < 1:
         parser.error("positive repeats required")
+    if args.output is None:
+        args.output = ROOT / ("results/lspi_matched_checkpoint.json.gz" if args.matched_reuse
+                              else "results/lspi_checkpoint.json.gz")
+    methods = MATCHED_METHODS if args.matched_reuse else METHODS
     cases = (CASES[0], CASES[3]) if args.smoke else CASES
     report = dict(created_at=datetime.now(timezone.utc).isoformat(), git_commit=git("rev-parse", "HEAD"),
                   git_dirty=bool(git("status", "--porcelain")), python=sys.version, platform=platform.platform(),
-                  arguments={**vars(args), "output": str(args.output)},
+                  arguments={**vars(args), "output": str(args.output)}, methods=methods,
                   source_sha256={str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                                  for p in sorted((ROOT / "src").rglob("*.py")) + sorted((ROOT / "scripts").glob("*.py"))},
-                  scope="Exact finite-schedule LSPI; scratch vs cached C/b/G reconstruction vs within-request policy-evaluation memoization vs target corrections. Dense exact solves (memo reuses repeated policies) and full policy scoring. Timed methods include trace creation; equality/hash/serialization excluded equally. Preparation includes initial full-data learning for every method. No inverse-update, measured memory or numerical GPU benchmark. Switch fixture seeds only change within-batch order.", runs=[])
+                  scope="Exact finite-schedule LSPI; scratch vs cached C/b/G reconstruction vs within-request policy-evaluation memoization vs target corrections. Optional matched-reuse adds memoized target replay. Dense exact solves (memo reuses repeated policies) and full policy scoring. Timed methods include trace creation; equality/hash/serialization excluded equally. Preparation includes initial full-data learning for every method. No inverse-update, measured memory or numerical GPU benchmark. Switch fixture seeds only change within-batch order.", runs=[])
     for case in cases:
         for seed in args.seeds:
             for repeat in range(args.repeats):
-                report["runs"].append(run(*case, seed, repeat))
+                report["runs"].append(run(*case, seed, repeat, methods=methods))
                 print(f"{case} seed={seed} repeat={repeat}: done", flush=True)
     report["failures"] = sum(not m["exact_trace_match"] for r in report["runs"] for q in r["requests"] for m in q["methods"].values())
     args.output.parent.mkdir(parents=True, exist_ok=True)

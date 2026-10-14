@@ -21,6 +21,8 @@ python scripts/summarize_global_checkpoint.py results/global_checkpoint.json.gz
 python scripts/run_lspi_demo.py --output results/lspi_demo.json
 python scripts/run_lspi_checkpoint.py --seeds 0 1 2 --repeats 3 --output results/lspi_checkpoint.json.gz
 python scripts/summarize_lspi_checkpoint.py results/lspi_checkpoint.json.gz
+python scripts/run_lspi_checkpoint.py --matched-reuse --seeds 0 1 2 --repeats 3 --output results/lspi_matched_checkpoint.json.gz
+python scripts/summarize_lspi_checkpoint.py results/lspi_matched_checkpoint.json.gz
 ```
 
 The package is at `src/rl_unlearning`. It currently uses only the Python standard library. `delete_and_repair` removes specified trajectories, tries local Bellman backups, checks the retained-model residual and action gaps, and falls back to full warm-started value iteration when it cannot certify the policy. The returned `RepairResult` reports local backups and full residual checks separately.
@@ -42,3 +44,5 @@ Set `solver="scc"` on `LocalPolicyRepair` to use exact policy iteration componen
 `LSPIReplayState` and `scratch_lspi` implement a declared finite fixed-feature LSPI schedule with exact rational arithmetic. Deletion replay corrects retained successor-policy targets and matches scratch matrices, weights and policies. Run the [worked example](checkpoints/lspi_control_example.md) to see a one-shot downdate produce the wrong final action. Singular requests do not commit; cycles remain explicit finite-schedule outputs. This is a correctness prototype with dense solves, not an efficiency or novelty result.
 
 `LSPICachedState` reconstructs each matrix from retained C/b/G sufficient statistics. `LSPIMemoizedState` additionally reuses evaluations of repeated policies within one request, clearing its evaluation cache at each deletion. The LSPI runner compares all four methods with preparation and original training charged. Its [archived results](output/benchmarks/lspi_checkpoint_summary.md) cover small synthetic rational problems; incremental inverse/factorization, memory profiling and practical numerical scale remain future comparisons.
+
+`LSPIReplayMemoizedState` gives target replay the same evaluation-cache policy. Use `--matched-reuse` to compare five methods and assert equal solve/action-score counts for both memoized variants. Its output and generated summary have distinct names so the four-method archive remains intact. See the [matched reuse contract](audits/lspi_matched_reuse.md).

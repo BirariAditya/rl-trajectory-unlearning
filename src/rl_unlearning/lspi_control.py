@@ -234,6 +234,8 @@ class LSPIReplayState:
     exhaustion are successful finite-schedule outputs, not convergence claims.
     """
 
+    reuse_policy_evaluations = False
+
     def __init__(self, problem, trajectories):
         self.problem = problem
         self._data = _data(problem, trajectories)
@@ -283,7 +285,7 @@ class LSPIReplayState:
             previous = policy
             return matrix, rhs
 
-        return _run(problem, assemble, work)
+        return _run(problem, assemble, work, reuse_policy_evaluations=self.reuse_policy_evaluations)
 
     def replay(self):
         return self._replay(self._anchor, self._rhs, self._successors)
@@ -319,3 +321,16 @@ class LSPIReplayState:
             for trajectory_id in requested:
                 del self._data[trajectory_id]
         return result
+
+
+class LSPIReplayMemoizedState(LSPIReplayState):
+    """Target corrections with the same per-request memoization as cached LSPI.
+
+    A cache hit skips assembly and solving, but preserves every scheduled trace
+    entry and greedy action scan. The mutable assembly matrix and its `previous`
+    policy both remain at the last actual assembly, so they stay consistent.
+    Evaluation caches never cross deletion requests. This is a conventional
+    optimization, not a new unlearning algorithm or an inverse-update method.
+    """
+
+    reuse_policy_evaluations = True

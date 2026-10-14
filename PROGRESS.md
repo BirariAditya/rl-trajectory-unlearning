@@ -21,6 +21,8 @@ Last updated: 2026-10-14. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Latest validation
 
+- **14 October continuation implementation: 80 tests pass.** Added target replay with the same within-request evaluation memoization as cached reconstruction. The new five-method smoke has zero mismatches and checks equal memoized solve/action-score counts. Cycle, singularity, cancellation, invalid-request and 32 random sequential-dataset tests cover reuse. The historical four-method summary regenerates byte-for-byte; repeated timing results follow a clean source commit.
+
 - **13 October experiment; 14 October documentation: Checkpoint 04 complete.** 74 tests and [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38338893080) pass. Four methods across 63 runs / 162 requests / 648 executions have zero exact trace mismatches. [Tables](output/benchmarks/lspi_checkpoint_summary.md), [raw archive](output/benchmarks/lspi_checkpoint.json.gz), [interpretation](checkpoints/04_lspi_cost.md). All timed requests reach fixed points; cycles/singular rejection are unit-tested, not timed here.
 - Source `475330cc3795e016d55babe089d398dded542aee` has 28 recorded source/script hashes, all verified unchanged after execution. The report correctly retains `git_dirty=true` because untracked presentation/guide documentation existed at launch. Memoized caching wins request medians in 7/7 settings; replay wins lifecycle medians in 2/7. Small synthetic rational timings are descriptive; memory, incremental inverse/factorization and GPU comparisons are not measured.
 
