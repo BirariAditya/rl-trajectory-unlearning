@@ -4,7 +4,7 @@ Last updated: 2026-10-15. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Current stage
 
-**Checkpoint 05 reached: equal policy-evaluation reuse in LSPI.** [The new comparison](checkpoints/05_lspi_matched_reuse.md) has 63 runs / 162 requests / 810 exact trace matches and 80 passing tests. Both memoized methods perform equal solve/action-score counts. Memoized replay has the lowest request and lifecycle medians in five of seven settings; it loses on the two larger switch fixtures. This conditional synthetic result does not establish novelty or a broad practical speedup. The [comprehensive presentation outline](presentation/2026-10-18/TALK_TRACK.md) and [learning guide](docs/LEARNING_GUIDE.md) cover all five checkpoints. GPU experiments have not started.
+**Checkpoint 06 reached: cumulative policy-sequence certificate.** [The experiment](checkpoints/06_policy_sequence_certificate.md) has 98 passing tests, 45 runs / 900 requests / 3,600 method executions with zero mismatches under explicit output contracts. Certificate output is policy sequence/status only; weights/internal anchors are not unlearned. Stable 128-state/4-feature lifecycle cost is 78.241 ms versus 269.630 ms for classical inverse reuse (3.45x); fragile margins lose overall. Preparation, fallback and separate Python allocations are recorded. This is the strongest conditional computational result so far, **not confirmed publication novelty**. GPU experiments have not started.
 
 ## Stage tracker
 
@@ -15,11 +15,14 @@ Last updated: 2026-10-15. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
 | Baselines and cost ledger | Lean global and classical elimination checkpoint complete | 4,158 further method executions / 108 runs; full lifecycle and scratch costs charged; external optimized FTVI is not reproduced |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
-| Frozen-feature LSPI control | Matched reuse comparison complete | 810 matching executions; replay lower medians in 5/7 settings with equal solves; numerical factorization, memory and novelty gates remain |
+| Frozen-feature LSPI control | Policy-sequence certificate and inverse-control checkpoint complete | 3,600 matching executions under explicit policy-only/full-trace contracts; lifecycle and Python allocations measured; prediction-only/feature-alias controls and numerical verification remain |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
+
+- **15 October: Checkpoint 06 complete.** 98 tests and [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38674439858) pass. 45 runs, 900 requests, 3,600 method executions; certificate passes 819 requests and uses fallback on 81. All policy sequences/statuses match direct retained-only LSPI; noncertificate methods also match full traces. [Report](checkpoints/06_policy_sequence_certificate.md), [tables](output/benchmarks/lspi_certificate_summary.md), [archive](output/benchmarks/lspi_certificate.json.gz). Clean source `97db5085ecdad055fd94206199d07cf0dedc5bd7`, all 32 source hashes verified.
+- Stable lifecycle savings survive classical inverse reuse (1.88x / 3.45x / 1.62x); fragile lifecycle is worse (83.808 vs 65.925 ms). Stable eight-feature fallback tail reaches a median run maximum of 184.620 ms. Separate Python allocation passes show nonuniform memory costs. Feature aliases and policy-only output differences remain material controls; no full-state or privacy claim.
 
 - **15 October candidate implementation: 98 tests pass.** Added exact inverse-maintenance controls (including reuse of greedy outputs), a cumulative policy-sequence stability certificate, explicit policy-only output, atomic fallback, and sequential cancellation tests. [Proof and prior-art boundary](audits/lspi_policy_certificate.md). The small smoke compares policy sequences and baseline full traces; full cost/memory experiment is pending. No breakthrough or novelty claimed from the smoke.
 
@@ -60,8 +63,8 @@ Last updated: 2026-10-15. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Next implementation tasks
 
-1. Use the [18 October preparation plan](presentation/2026-10-18/README.md) to study the equations, reproduce the demos, and rehearse all four checkpoints. Keep historical findings and later stronger comparisons together.
-2. Matched repeated-policy reuse is complete. Next add measured memory in separate passes, stable numerical factorization controls, long deletion sequences and conditioning/failure regimes. These are implementation gates, not novelty claims.
+1. Use the [18 October preparation plan](presentation/2026-10-18/README.md) to study the equations, reproduce the demos, and rehearse all completed checkpoints. Explain the new policy-only contract before its timing results.
+2. Add unique-feature and feature-deduplicated controls with matched prediction-only output. Then test verified floating-point bounds, numerical factorization and conditioning; exact inverse reuse, 20-request sequences and separate Python allocations are now implemented.
 3. State and audit a deletion-specific theorem or advantage beyond established incremental LSPI before neural scale-up. If no such claim survives, reframe as a failure/evaluation study. User-identity batches, larger real tasks and GPU experiments remain staged.
 
 ## Limitations and open decisions
@@ -77,6 +80,8 @@ Last updated: 2026-10-15. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 At the end of each implementation session, update this file with the current stage, actual commands/results, output paths, completed tasks, next tasks, and blockers. Mark a gate complete only when its evidence exists. Keep failed experiments and scope limitations visible. Do not silently upgrade a hypothesis to a result.
 
 ## Activity log
+
+- **2026-10-15:** completed Checkpoint 06 with a cumulative policy-sequence certificate, exact Sherman–Morrison controls, 98 tests, 900 checked requests and 20 separate allocation passes. Added proof and sequential-cancellation regression; found conditional lifecycle gains and fragile/fallback failures. Updated prior art with unchanged-prediction certification and AGT. Full-state deletion and publication novelty remain unestablished.
 
 - **2026-10-14 continuation:** implemented memoized replay, added six tests (80 total), pushed clean source `b576ee4`, and completed Checkpoint 05's 810 matching executions. Both methods now reuse repeated evaluations equally; conditional gains survive in five settings and fail in two. Archived results separately and expanded the presentation to 27 slide sections.
 

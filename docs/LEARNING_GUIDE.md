@@ -1,6 +1,6 @@
 # Learning guide: trajectory deletion in offline reinforcement learning
 
-**Status: 14 October 2026; evidence through Checkpoint 05.** This is a study companion to the implemented repository, not a claim that a publishable new algorithm has been established. [Checkpoint 04](../checkpoints/04_lspi_cost.md) exposed a strong cached baseline. [Checkpoint 05](../checkpoints/05_lspi_matched_reuse.md) gives both methods equal policy-evaluation reuse; memoized replay then has the lowest request/lifecycle medians in five of seven settings. Start with this guide, run the tiny demos, and use the linked contracts when a proof detail matters.
+**Status: 15 October 2026; evidence through Checkpoint 06.** This is a study companion, not a claim that a publishable new algorithm has been established. [Checkpoint 06](../checkpoints/06_policy_sequence_certificate.md) introduces a policy-sequence-only certificate with conditional lifecycle savings, exact inverse controls, and measured fallback/allocation costs. Its output guarantee is narrower than the earlier full-weight trace comparisons. Read the earlier checkpoints in order, then Section 10 for this new distinction.
 
 ## 1. The question in one minute
 
@@ -239,3 +239,21 @@ Suggested study sequence:
 6. Read the [direct RL literature](../literature_review.md#2-direct-work-on-rl-experience-deletion), especially TrajDeleter, TOUR, and Exact Unlearning in RL; only then use the LLM papers for adjacent ideas.
 
 Three checks of understanding: (i) Why can a retained-only policy still visit a forgotten state? (ii) Why does a changed row sometimes alter a predecessor's action? (iii) Why does LSPI need to update targets of retained transitions after policy improvement? If these are clear, you have the core of the project.
+
+## 10. New candidate: certify the policy sequence without recomputing the weights
+
+The 15 October candidate asks a narrower question than full-trace replay: can we prove that the action choices stay the same after deletion, even though the exact weights change? Imagine two actions with scores 10 and 1. If we can bound every score change by less than 0.1, solving for the exact new scores is unnecessary to identify the best action. The implemented test uses feature differences and a bound on the weight change rather than this illustrative pair of scores.
+
+For one old LSPI input policy, let A be its evaluation matrix, w its weights and H its inverse. Deletion changes A by E and the right-hand side by f. Then the new weight difference satisfies `(I + H E)(w_new - w) = H(f - E w)`. The implementation accumulates the right-hand side exactly as a vector h, and an upper bound alpha on the size of H E. If alpha is below one, the retained matrix remains invertible and the maximum weight-coordinate change is at most `epsilon = max(abs(h)) / (1 - alpha)`.
+
+Before requests arrive, scan all actions and save the smallest score gap divided by the L1 length of the corresponding feature difference. Call this radius rho. If epsilon is strictly below rho, that policy's greedy output cannot change anywhere in the declared state domain. Do this for every distinct input policy in the old finite LSPI schedule. Starting from the same initial policy, the first improved policy stays the same, then the second, and so on. Checking only the final policy would not justify that induction.
+
+This pays for full action scans and inverses in preparation. Accepted deletion requests then read the newly deleted transitions and update small bounds, without fresh solves or action rescoring. If a bound fails, it is merely inconclusive: rebuild the retained learner and create new anchors. Keep cumulative bounds across requests; cancellations in h do not reset the matrix-perturbation bound alpha. The [proof and regression example](../audits/lspi_policy_certificate.md) explain this subtle point.
+
+The output is **policy sequence and status only**. Old inverse/weight anchors remain internal. It would be incorrect to return those old weights as retained-only weights, or to claim that all deleted influence has been erased. A complete-state or privacy guarantee is a different problem. Unchanged-prediction certificates also have prior art; the potential research contribution must go beyond the basic inequality.
+
+The new experiment therefore includes a classical Sherman–Morrison inverse-update method that computes exact retained weights. It also avoids redundant greedy scans when a policy repeats. All methods pay preparation, and certificate failures pay rebuilding. Separate Python allocation passes measure additional traced memory, while excluding the pre-existing input dataset and feature map. Practical floating-point stability and external optimized implementations remain separate gates.
+
+The completed [Checkpoint 06](../checkpoints/06_policy_sequence_certificate.md) has 98 passing tests and 900 checked deletion requests, with no policy-sequence/status mismatches. The certificate accepts 819 and rebuilds on 81. In a stable 128-state/4-feature case, training plus 20 requests costs 78.241 ms versus 269.630 ms for exact inverse reuse (3.45x). In the fragile case it costs 83.808 ms versus 65.925 ms: it loses despite a cheap request median. The eight-feature stable case has a 184.620 ms median run-maximum certificate request because fallback is expensive. This is why both total and tail costs matter.
+
+Some generated states have identical features, and the certificate releases less than a full weight trace. These can affect the comparison. The next control must use unique features or deduplicate baseline predictions, and match the output interface. This is a promising restricted-learner result, not confirmation of a novel unlearning algorithm.

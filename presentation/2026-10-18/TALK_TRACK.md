@@ -1,10 +1,10 @@
 # Presentation talk track — trajectory unlearning in offline RL
 
-**Updated 14 October for 18 October 2026; evidence through Checkpoint 05 (experiment run 14 October).** This comprehensive, modular 27-slide Markdown outline covers all work so far, with speaker notes and evidence links. Both LSPI cost comparisons are included, with favorable and adverse results. The companion [learning guide](../../docs/LEARNING_GUIDE.md) explains the equations more slowly. This is presentation source material, not a rendered slide deck.
+**Updated 15 October for 18 October 2026; evidence through Checkpoint 06.** This comprehensive, modular 30-slide Markdown outline covers all work so far, with speaker notes and evidence links. The policy-sequence certificate is included with its narrower guarantee and adverse cases. The companion [learning guide](../../docs/LEARNING_GUIDE.md) explains the equations more slowly. This is presentation source material, not a rendered slide deck.
 
 ## Presentation contract
 
-Open with the research question and define the retained-only learner. Show the implementation and how stronger classical controls changed its interpretation. Close on matched LSPI reuse and the next memory/factorization gate. The strongest demonstrated claim is **correctness relative to declared restricted learners**, with a conditional synthetic cost advantage after equalizing reuse. We have not measured continuous-control or real-environment retained-task return, nor run a GPU experiment. A policy matching a retained empirical model is not thereby useful in the true environment.
+Open with the research question and define the retained-only learner. Show the implementation and how stronger classical controls changed its interpretation. Close on the policy-sequence certificate, its narrower output and the next feature/output/numerical controls. The strongest demonstrated claims are **correctness relative to declared restricted learners** and conditional synthetic lifecycle savings. We have not measured continuous-control or real-environment retained-task return, nor run a GPU experiment. A policy matching a retained empirical model is not thereby useful in the true environment.
 
 Use these terms consistently:
 
@@ -243,13 +243,43 @@ Use these terms consistently:
 
 **Evidence:** [Checkpoint 05](../../checkpoints/05_lspi_matched_reuse.md), [complete tables](../../output/benchmarks/lspi_matched_checkpoint_summary.md), [reuse invariant](../../audits/lspi_matched_reuse.md), [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38596853065).
 
+### Slide 27 — A narrower question: must the policy be relearned?
+
+**On slide:** Weights may change while actions stay identical. Certify every policy-improvement output. Return policy sequence/status only. Old internal anchors remain.
+
+**Speaker notes:** This changes the output contract explicitly: earlier checkpoints matched matrices and weights as well. The new fast path proves only the same policy sequence and status as the specified retained-only learner. It does not claim old weights are retained-only weights, or that internal caches have lost deleted influence. Predictions that remain unchanged under removal already have prior art, including Wicker et al. and Abstract Gradient Training. The candidate specialization is to the policy-dependent sequence of LSPI evaluations. A fast check is meaningful only if its preparation and failures are charged.
+
+**Evidence:** [Policy certificate proof and prior art](../../audits/lspi_policy_certificate.md), [learning guide Section 10](../../docs/LEARNING_GUIDE.md#10-new-candidate-certify-the-policy-sequence-without-recomputing-the-weights).
+
+### Slide 28 — Cumulative bound and sequence induction
+
+**On slide:** Anchor inverse H=A^-1. Deletion changes matrix/RHS by E,f. `(I+HE) delta_w = h = H(f-Ew)`. If `alpha >= ||HE||inf` and `alpha < 1`, then `||delta_w||inf <= ||h||inf/(1-alpha)`. Compare with precomputed action-margin radius.
+
+**Speaker notes:** The bound controls how far weights can move for one input policy. Precompute the smallest normalized action gap over the entire state/action domain. If the bound is smaller, every greedy choice stays unchanged. Check each distinct input policy in the old finite schedule, and induction preserves all later inputs and outputs from the fixed initialization. Maintain cumulative h and alpha across deletions. h may cancel without alpha becoming zero; resetting both would be unsound. A failed bound is inconclusive and triggers exact retained replay plus anchor rebuilding. A singular retained solve rejects the request without changing state. This uses established perturbation algebra; its usefulness depends on the complete cost.
+
+**Evidence:** [Proof and cancellation counterexample](../../audits/lspi_policy_certificate.md), [tests](../../tests/test_lspi_policy_certificate.py).
+
+### Slide 29 — Checkpoint 06: strongest conditional result so far
+
+**On slide:** 98 tests; 45 runs / 900 requests / 3,600 method executions, zero mismatches under declared contracts. 819 certificates pass; 81 fallbacks. Full lifecycle includes training/preparation and 20 requests.
+
+| Setting | Classical inverse reuse | Policy certificate | Interpretation |
+| --- | ---: | ---: | --- |
+| Stable, 128 states, 4 features | 269.630 ms | 78.241 ms | 3.45x lower lifecycle time |
+| Stable, 128 states, 8 features | 693.163 ms | 426.610 ms | 1.62x lower lifecycle time |
+| Fragile, 16 states, 4 features | 65.925 ms | 83.808 ms | Certificate loses overall |
+
+**Speaker notes:** The inverse control is classical Sherman–Morrison and also reuses repeated greedy outputs, so it avoids redundant action scans within a request. The certificate avoids new scans across accepted deletions. Its bound is arithmetic O(J*m*d^2 + J*d + deleted IDs) after paid inverse/margin preparation, independent of retained sample count and action-domain size on the accepted path; output serialization and rational bit costs are excluded. Show the failure: the eight-feature stable case has a median run-maximum request of 184.620 ms from fallback. Separate allocation peaks there are 210.5 KiB for the certificate and 204.8 KiB for inverse reuse, excluding pre-existing inputs. Some synthetic states share features; prediction deduplication and matched policy-only outputs remain important controls. These are not representative-task, statistical significance, privacy or novelty results.
+
+**Evidence:** [Checkpoint 06](../../checkpoints/06_policy_sequence_certificate.md), [complete timing/allocation tables](../../output/benchmarks/lspi_certificate_summary.md), [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38674439858).
+
 ## Module F — Research decision
 
-### Slide 27 — What we can defend on 18 October
+### Slide 30 — What we can defend on 18 October
 
-**On slide:** (1) Precise retained-only target. (2) Tested exact tabular policy/value and finite LSPI-trace equality. (3) Stronger controls expose failure regimes; equal reuse preserves a conditional LSPI gain. (4) Measure memory and compare numerical factorization before advancing a deletion-specific claim.
+**On slide:** (1) Precise retained-only targets. (2) Tested exact tabular/full-trace learners. (3) A narrower policy-sequence certificate with conditional lifecycle gains. (4) Feature-alias, output-contract and numerical controls before a new-algorithm claim.
 
-**Speaker notes:** Equal repeated-policy reuse is now complete. Next add measured memory in separate passes, stable numerical factorization, longer deletion sequences and conditioning/failure sweeps. Charge all preparation and fallback. These are stronger controls, not novelty by themselves. A paper claim must add a substantive deletion-specific guarantee or advantage beyond established incremental LSPI. If it does not survive, reframe the question. GPU experiments remain conditional and have not measured retained-task return or privacy. Ask the advisor which learner, deletion model and theorem would make the work compelling. Do not assert conference acceptance probability or a finished new algorithm.
+**Speaker notes:** Exact inverse reuse, 20-request sequences and separate Python allocation measurements are now complete. Next test unique features and feature-deduplicated prediction-only baselines, verified floating-point bounds and adverse conditioning. A paper claim must add a substantive deletion-specific guarantee or advantage beyond established incremental LSPI and unchanged-prediction certification. GPU experiments remain conditional; we have not measured retained-task return or privacy. Ask the advisor whether a policy-output guarantee is a useful target and what additional theorem/comparator is required. Do not assert conference acceptance probability or a confirmed novel algorithm.
 
 **Evidence:** [Progress next steps](../../PROGRESS.md#next-implementation-tasks), [Checkpoint 03 updated phases](../../checkpoints/03_global_controls_and_lspi.md#updated-research-phases).
 
@@ -264,6 +294,7 @@ Use these terms consistently:
 | A real-environment utility or neural privacy result exists | **No evidence yet** | Do not claim |
 | Memoized caching has the lowest request median in 7/7 settings; replay has the lowest lifecycle median in 2/7 | [Checkpoint 04](../../checkpoints/04_lspi_cost.md), [tables](../../output/benchmarks/lspi_checkpoint_summary.md) | Descriptive small rational timings; reuse is not matched, memory and factorization remain unmeasured |
 | With equal reuse, memoized replay has the lowest request and lifecycle medians in 5/7 settings | [Checkpoint 05](../../checkpoints/05_lspi_matched_reuse.md), [tables](../../output/benchmarks/lspi_matched_checkpoint_summary.md) | Conditional engineering gain; two larger switch fixtures lose; not novelty or significance |
+| Policy-sequence certificates give conditional lifecycle savings over classical inverse reuse | [Checkpoint 06](../../checkpoints/06_policy_sequence_certificate.md), [proof](../../audits/lspi_policy_certificate.md) | Policy-only output, retained internal anchors, feature aliases, fragile/fallback failures; not full-state erasure |
 
 ## Optional backup slides
 
@@ -287,11 +318,13 @@ Use these terms consistently:
 
 **“What is exact about LSPI?”** Every matrix, RHS, weight, and policy agrees with direct retained-only training under the same fixed iteration schedule, including finite cycles. It does not imply convergence, optimal control, fast computation, privacy, or correctness for a learned feature map.
 
+**“Does the new certificate also match the weights?”** No. The earlier replay/inverse methods match full traces; the certificate only guarantees the policy sequence and status. It keeps old internal weights/inverses as anchors and does not release them as retained-only weights. That distinction is central to Checkpoint 06.
+
 **“Why no GPU result yet?”** The exactness arguments belong to restricted learners. GPUs can support multiple neural retrains, but a neural claim needs its own target, strong baselines, attacks, and return measurements. Current [progress](../../PROGRESS.md) records no GPU experiment.
 
 **“Do the timing ratios prove significance?”** No. Three dataset seeds and timing repeats on those datasets are descriptive. The models are small and synthetic. The ratios are useful to expose failure regimes, not to estimate general deployment performance.
 
-**“What would change the conclusion before the talk?”** A new, separately archived numerical factorization and memory comparison, with adverse conditioning and longer deletion streams. Equal memoization is already complete in Checkpoint 05; it shows conditional gains but two losing regimes. Further engineering gains would still need a focused novelty argument.
+**“What would change the conclusion before the talk?”** A separately archived comparison with unique features and matched prediction-only outputs, followed by verified numerical bounds and conditioning controls. Checkpoint 06 already adds exact inverse reuse and allocation measurements; its gains remain conditional and its output narrower. Further engineering gains still need a focused novelty argument.
 
 ## Speaker claim-control card
 
@@ -303,6 +336,7 @@ Use these terms consistently:
 | “Constructed regime, descriptive median” | “Universal or statistically significant speedup” |
 | “Classical elimination beat our current local method over these lifecycles” | Hiding that result behind request-only numbers |
 | “With equal reuse, memoized replay wins five settings and loses two in this pilot” | Universal speedup or an acceptance estimate |
+| “The certificate matches the retained-only policy sequence under its conditions” | “It erases deleted influence from all weights and caches” |
 
 ## Presenter study order
 
@@ -311,3 +345,4 @@ Use these terms consistently:
 3. Read [Checkpoint 01](../../checkpoints/01_exact_local_repair.md), [02](../../checkpoints/02_scc_controls.md), and [03](../../checkpoints/03_global_controls_and_lspi.md) in order; explain how each comparator changed the story.
 4. Verify all numeric slides directly in the [global table](../../output/benchmarks/global_checkpoint_summary.md) and [LSPI fixture](../../checkpoints/lspi_control_example.md).
 5. Read [Checkpoint 04](../../checkpoints/04_lspi_cost.md) and [05](../../checkpoints/05_lspi_matched_reuse.md), then verify Slides 25–26 in their separate archived tables. Before 18 October, check [PROGRESS.md](../../PROGRESS.md) for any later validated checkpoint and retain the negative findings.
+6. Read [Checkpoint 06](../../checkpoints/06_policy_sequence_certificate.md) and the [certificate proof](../../audits/lspi_policy_certificate.md). Explain why the output contract is narrower before discussing the 3.45x lifecycle example and fragile-case loss.

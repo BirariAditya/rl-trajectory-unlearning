@@ -150,6 +150,10 @@ The strongest near-term paper should target a deletion-dependent tabular theorem
 
 ## 7. Source list and evidence boundaries
 
+### 15 October update: unchanged-prediction certificates are prior art
+
+The policy-sequence candidate must also be compared with verification-based unlearning, not only RL methods. [Wicker et al., arXiv:2406.13433v1 (2024)](https://arxiv.org/abs/2406.13433v1) proposes certificates for specific predictions that do not depend on data subject to removal. The version matters: the latest version has a different title and a private-prediction focus. [Sosnin et al., Abstract Gradient Training, JMLR 27(128), 2026](https://www.jmlr.org/papers/v27/25-2206.html) bounds parameter sets reachable under training-data perturbations, including removals, for first-order training. Thus “certify an unchanged prediction instead of retraining” is not our novelty. Our [candidate proof](audits/lspi_policy_certificate.md) specializes a perturbation/margin argument to every policy-dependent evaluation in a finite LSPI schedule. Whether that specialization supports a substantive new theorem remains open; output-specific stability must not be promoted to erasure of internal state.
+
 The primary sources linked above support the paper descriptions and the reported empirical numbers. Local supplied versions were identified by first-page text and page counts (RUM 34 pages; RULE 24; Exact 24; PURGE 27; Yao et al. 51). The supplied RULE file is an arXiv preprint; the linked NeurIPS record is its later conference version. The exact-RL, TOUR, UBA-ORL, and ForgetMimic arXiv papers are especially recent as of 29 September 2026. Conference status for Exact is stated by its [author's publication list](https://thanhnguyentang.github.io/); the arXiv record is the stable technical source cited here. The CURe mention is deliberately title-only pending a primary abstract or paper.
 
 No paper above proves that a generic deep offline RL policy can be efficiently made distributionally identical to retraining after arbitrary trajectory deletion. No membership attack suite can prove that either. Those are open requirements, not claims of the proposed method.

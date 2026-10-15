@@ -1,13 +1,14 @@
 # Comprehensive research presentation: 18 October 2026
 
-Updated 14 October. This folder contains a **27-slide Markdown outline with speaker notes**, not a rendered PPTX. The scope covers the full work so far, with no assumed ten-minute limit. Experimental evidence is frozen through Checkpoint 05, run on 14 October. New experiments must receive their own dated report before changing presentation claims.
+Updated 15 October. This folder contains a **30-slide Markdown outline with speaker notes**, not a rendered PPTX. The scope covers the full work so far, with no assumed ten-minute limit. Experimental evidence is frozen through Checkpoint 06. New experiments must receive their own dated report before changing presentation claims.
 
 ## Read and rehearse in this order
 
 1. [Learning guide](../../docs/LEARNING_GUIDE.md): problem definition, paper distinctions, equations, tabular repair, LSPI and worked counterexample. Assumes basic RL and explains the math.
-2. [Talk track](TALK_TRACK.md): all 27 slide sections, speaker notes, claim–evidence table, backup material and professor questions.
+2. [Talk track](TALK_TRACK.md): all 30 slide sections, speaker notes, claim–evidence table, backup material and professor questions.
 3. [Professor update](../../PROFESSOR_UPDATE.md): concise progress language; the top 14 October update supersedes historical material below it.
 4. Checkpoints [01](../../checkpoints/01_exact_local_repair.md), [02](../../checkpoints/02_scc_controls.md), [03](../../checkpoints/03_global_controls_and_lspi.md), [04](../../checkpoints/04_lspi_cost.md), and [05](../../checkpoints/05_lspi_matched_reuse.md): how each stronger comparator changed the interpretation.
+   Then [Checkpoint 06](../../checkpoints/06_policy_sequence_certificate.md): how a narrower policy-sequence guarantee enables a new fast path, why it sometimes loses, and which prior art limits novelty.
 5. [Implementation plan](../../implementation_plan.md) and [progress log](../../PROGRESS.md): what is complete, what is still a hypothesis, and which gate comes next.
 
 ## What to demonstrate
@@ -30,7 +31,7 @@ Do not run full timing matrices during the talk. Use the archived [tabular globa
 | --- | --- | --- |
 | 14 October | Freeze and cross-check evidence; prepare study material | Checkpoint 04, archive, guide, outline and current progress agree |
 | 14–15 October | Study the learner, proofs and counterexample | Explain every symbol and the difference between policy fidelity, privacy and retained return without reading notes |
-| 15–16 October | Bounded continuation experiment | Completed early on 14 October: equal memoization, Checkpoint 05; retain both losing regimes |
+| 15–16 October | Bounded continuation experiments | Checkpoints 05–06 complete: equal reuse, inverse control, policy certificate and allocation passes; study the narrower guarantee and fallback cases |
 | 16–17 October | Rehearse the comprehensive presentation | Explain every checkpoint, its strongest control, limitations, and resulting decision; verify numeric slides against sources |
 | 18 October | Present research progress and discuss the next claim | Obtain feedback on the deletion model, strongest comparator, and proof needed before neural scale-up |
 
@@ -38,4 +39,4 @@ Evidence preparation and the matched-reuse continuation are complete. Study, reh
 
 ## Research position to communicate
 
-We have a tested research system and increasingly strong comparisons. Exactness is relative to a specified rational tabular learner or a finite fixed-feature LSPI schedule. The tabular pruning mechanism and LSPI target correction do not yet constitute demonstrated novelty. Ordinary cached memoization is a strong LSPI control, and no neural/GPU, real-environment return, or privacy result has been produced. Present this as research progress with explicit decisions and falsified hypotheses.
+We have a tested research system and increasingly strong comparisons. Exactness is relative to a specified rational tabular learner or finite fixed-feature LSPI schedule. The latest certificate narrows the output to policy sequence/status and retains old internal anchors; it has conditional lifecycle gains but is not full-state erasure. None of the current mechanisms has established publication-level novelty. No neural/GPU, real-environment return, or privacy result has been produced. Present the proof, gains, negative cases and next controls together.
