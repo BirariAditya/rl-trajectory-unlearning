@@ -103,6 +103,18 @@ class LSPIResult:
     work: LSPIWork
 
 
+@dataclass(frozen=True)
+class LSPIPolicyResult:
+    """Policy-only projection; no matrix/weight trace is constructed for output."""
+
+    policy: tuple
+    policy_sequence: tuple
+    status: str
+    repeat_start: int | None
+    repeat_length: int | None
+    work: LSPIWork
+
+
 class SingularLSTDMatrix(ArithmeticError):
     pass
 

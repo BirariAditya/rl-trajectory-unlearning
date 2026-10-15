@@ -25,6 +25,7 @@ python scripts/run_lspi_checkpoint.py --matched-reuse --seeds 0 1 2 --repeats 3 
 python scripts/summarize_lspi_checkpoint.py results/lspi_matched_checkpoint.json.gz
 python scripts/run_lspi_certificate.py --seeds 0 1 2 --repeats 3 --requests 20 --memory --output results/lspi_certificate.json.gz
 python scripts/summarize_lspi_certificate.py results/lspi_certificate.json.gz
+python scripts/run_lspi_unique_controls.py --seeds 0 1 2 --repeats 3 --requests 12 --memory --output results/lspi_unique_controls.json.gz
 ```
 
 The package is at `src/rl_unlearning`. It currently uses only the Python standard library. `delete_and_repair` removes specified trajectories, tries local Bellman backups, checks the retained-model residual and action gaps, and falls back to full warm-started value iteration when it cannot certify the policy. The returned `RepairResult` reports local backups and full residual checks separately.
@@ -50,3 +51,13 @@ Set `solver="scc"` on `LocalPolicyRepair` to use exact policy iteration componen
 `LSPIReplayMemoizedState` gives target replay the same evaluation-cache policy. Use `--matched-reuse` to compare five methods and assert equal solve/action-score counts for both memoized variants. Its output and generated summary have distinct names so the four-method archive remains intact. See the [matched reuse contract](audits/lspi_matched_reuse.md).
 
 `LSPIPolicyCertificateState` tests cumulative deletion bounds against precomputed action margins for every distinct input policy. An accepted request returns the exact retained-only **policy sequence**, without promising retained-only weights or erasure of internal anchors. Inconclusive requests rebuild exactly. `LSPIInversePolicyState` is the stronger classical inverse-update control, also reusing repeated greedy outputs. The [certificate proof and prior art](audits/lspi_policy_certificate.md) state this narrower output contract and its limits. The new runner measures preparation/fallback and optionally separate Python allocations.
+
+`LSPIInverseDeduplicatedState` is a stronger conventional control that scores each
+unique ordered action-feature row once. Its `policy_only=True` option avoids
+constructing a matrix/weight output trace. `LSPISelectiveRepairState` maintains
+immutable margin indexes and computes the exact retained weights before
+rescoring only uncertain feature groups. It can repair changed decisions while
+returning a full exact trace. `LSPISharedAnchorRepairState` tests reuse of the
+initial anchor bank across new policy branches, paying every index query.
+[Proof and prior-art audit](audits/decision_repair_review.md). These classes retain
+historical internal anchors and do not certify full-state erasure or privacy.

@@ -4,6 +4,15 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
+**16 October active gate:** test selective decision repair using exact retained
+weights and immutable margin indexes; include a frozen bank shared across new
+input-policy branches. Compare against feature-deduplicated inverse updates and
+matched policy-only output on paired aliased/unique mixed-sign features. Require
+full trace equality, actual decision changes, setup-inclusive timing, tail costs
+and separate allocations. Existing prediction-sensitivity work from 2015 further
+narrows novelty; the screen alone is not a contribution. Complete this bounded
+checkpoint before changing the presentation story or beginning GPU work.
+
 **15 October completed certificate checkpoint:** [Checkpoint 06](checkpoints/06_policy_sequence_certificate.md) passes 98 tests and 900 requests across four methods. A policy-only certificate has conditional lifecycle savings versus exact inverse reuse (up to 3.45x in the tested stable settings), loses on fragile margins, and exposes expensive fallback tails. Separate allocation measurement is complete. Next remove two confounders—feature aliases and mismatched output richness—then test verified numerical bounds and conditioning. Keep the narrower output contract explicit; no full-state or publication-novelty claim is established. The candidate entry below records the earlier decision to run this experiment.
 
 **15 October candidate gate:** after Checkpoint 05, test a cumulative certificate for the **policy-sequence output**, explicitly narrower than a matrix/weight trace. It combines an anchor inverse perturbation bound with precomputed all-state action margins and inducts over every distinct input policy. [Proof, cost and prior art](audits/lspi_policy_certificate.md). The implementation and exact Sherman–Morrison control pass 98 tests; the full repeated timing and separate allocation experiment is running. No breakthrough claim until total lifecycle cost, fallback regimes and prior art are assessed. If the gain comes only from repeated feature aliases or a weaker output interface, narrow the claim and add matched prediction-only controls before expanding.

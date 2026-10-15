@@ -1,6 +1,6 @@
 # Research progress
 
-Last updated: 2026-10-15. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
+Last updated: 2026-10-16. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
 
 ## Current stage
 
@@ -20,6 +20,16 @@ Last updated: 2026-10-15. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
+
+- **16 October candidate implementation:** added exact selective greedy repair,
+  a shared initial-anchor bank for new policy branches, feature-deduplicated
+  inverse controls and matching policy-only interfaces. New tests cover changed
+  decisions, cumulative anchor drift, exact ties and atomic singular rollback.
+  A separate paired aliased/unique-feature experiment is being prepared; its
+  results are not yet established. All **114 tests pass**; the seven-method smoke
+  checks 6 requests / 42 executions with zero mismatches, plus 21 separate
+  allocation passes. [Proof and prior-art audit](audits/decision_repair_review.md).
+
 
 - **15 October: Checkpoint 06 complete.** 98 tests and [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38674439858) pass. 45 runs, 900 requests, 3,600 method executions; certificate passes 819 requests and uses fallback on 81. All policy sequences/statuses match direct retained-only LSPI; noncertificate methods also match full traces. [Report](checkpoints/06_policy_sequence_certificate.md), [tables](output/benchmarks/lspi_certificate_summary.md), [archive](output/benchmarks/lspi_certificate.json.gz). Clean source `97db5085ecdad055fd94206199d07cf0dedc5bd7`, all 32 source hashes verified.
 - Stable lifecycle savings survive classical inverse reuse (1.88x / 3.45x / 1.62x); fragile lifecycle is worse (83.808 vs 65.925 ms). Stable eight-feature fallback tail reaches a median run maximum of 184.620 ms. Separate Python allocation passes show nonuniform memory costs. Feature aliases and policy-only output differences remain material controls; no full-state or privacy claim.

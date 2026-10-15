@@ -8,7 +8,8 @@ downdate, use one fresh exact inverse of the final retained matrix.
 
 The declared LSPI schedule always restarts at its data-independent initial
 policy and runs all K iterations. Repeated policies within one request reuse an
-evaluation but still emit every trace entry and score every state/action.
+evaluation. Derived controls also reuse greedy outputs and feature groups.
+Full traces are emitted by default; policy_only=True omits their construction.
 Candidate caches are discarded after a failed (singular) deletion request;
 the last successful cache remains intact. Successful caches retain only policies
 encountered in the latest successful schedule.
@@ -20,6 +21,7 @@ from .lspi_baselines import LSPICachedState, _change_successor
 from .lspi_control import (
     LSPIIterate,
     LSPIResult,
+    LSPIPolicyResult,
     LSPIWork,
     SingularLSTDMatrix,
     _fraction,
@@ -99,8 +101,9 @@ class LSPIInverseState(LSPICachedState):
 
     reuse_greedy_outputs = False
 
-    def __init__(self, problem, trajectories):
+    def __init__(self, problem, trajectories, *, policy_only=False):
         super().__init__(problem, trajectories)
+        self.policy_only = policy_only
         self._inverse_cache = {}
         self.last_inverse_work = {}
 
@@ -203,7 +206,8 @@ class LSPIInverseState(LSPICachedState):
                     if inverse is None:
                         raise SingularLSTDMatrix("LSTD matrix is singular")
                 except SingularLSTDMatrix:
-                    trace.append(LSPIIterate(index, policy, matrix, rhs, None, None))
+                    trace.append(None if self.policy_only else
+                                 LSPIIterate(index, policy, matrix, rhs, None, None))
                     inverse_work["successor_entries_checked"] = work[
                         "successor_entries_checked"
                     ]
@@ -211,10 +215,8 @@ class LSPIInverseState(LSPICachedState):
                     inverse_work["action_scores"] = work["action_scores"]
                     self.last_inverse_work = inverse_work
                     return (
-                        LSPIResult(
-                            tuple(trace), policy, None, "singular",
-                            repeat_start, repeat_length, LSPIWork(**work),
-                        ),
+                        self._result(trace, policy, None, "singular",
+                                     repeat_start, repeat_length, work),
                         None,
                     )
                 weights = _matvec(inverse, rhs)
@@ -223,26 +225,11 @@ class LSPIInverseState(LSPICachedState):
             if self.reuse_greedy_outputs and policy in greedy_cache:
                 improved = greedy_cache[policy]
             else:
-                improved = []
-                for state in problem.states:
-                    scores = [
-                        sum(
-                            (feature * weight for feature, weight in
-                             zip(problem.features[(state, action)], weights)),
-                            F(0),
-                        )
-                        for action in problem.actions
-                    ]
-                    work["action_scores"] += len(problem.actions)
-                    improved.append(
-                        problem.actions[
-                            max(range(len(scores)), key=scores.__getitem__)
-                        ]
-                    )
-                improved = tuple(improved)
+                improved = self._greedy(policy, weights, work)
                 if self.reuse_greedy_outputs:
                     greedy_cache[policy] = improved
-            trace.append(LSPIIterate(index, policy, matrix, rhs, weights, improved))
+            trace.append(improved if self.policy_only else
+                         LSPIIterate(index, policy, matrix, rhs, weights, improved))
             if improved in seen and repeat_start is None:
                 repeat_start = seen[improved]
                 repeat_length = index + 1 - repeat_start
@@ -260,14 +247,29 @@ class LSPIInverseState(LSPICachedState):
         inverse_work["target_terms"] = work["target_rank_one_updates"]
         inverse_work["action_scores"] = work["action_scores"]
         self.last_inverse_work = inverse_work
-        result = LSPIResult(
-            tuple(trace), policy, trace[-1].weights, status,
-            repeat_start, repeat_length, LSPIWork(**work),
-        )
+        result = self._result(trace, policy, weights, status,
+                              repeat_start, repeat_length, work)
         return result, {
             candidate_policy: (matrix, inverse)
             for candidate_policy, (matrix, inverse, _) in current_cache.items()
         }
+
+    def _result(self, trace, policy, weights, status, repeat_start, repeat_length, work):
+        if self.policy_only:
+            return LSPIPolicyResult(policy, tuple(trace), status, repeat_start,
+                                    repeat_length, LSPIWork(**work))
+        return LSPIResult(tuple(trace), policy, weights, status, repeat_start,
+                          repeat_length, LSPIWork(**work))
+
+    def _greedy(self, policy, weights, work):
+        improved = []
+        for state in self.problem.states:
+            scores = tuple(sum((feature * weight for feature, weight in
+                                zip(self.problem.features[(state, action)], weights)), F(0))
+                           for action in self.problem.actions)
+            work["action_scores"] += len(self.problem.actions)
+            improved.append(self.problem.actions[max(range(len(scores)), key=scores.__getitem__)])
+        return tuple(improved)
 
     def replay(self):
         """Run the current retained learner and cache its encountered inverses."""
@@ -330,3 +332,35 @@ class LSPIInversePolicyState(LSPIInverseState):
     """
 
     reuse_greedy_outputs = True
+
+
+class LSPIInverseDeduplicatedState(LSPIInversePolicyState):
+    """Classical control: score identical ordered action-feature rows just once.
+
+    The data-independent feature index is built at construction and charged as
+    preparation. Materializing a full policy still costs O(number of states).
+    policy_only=True omits creation of full trace entries, but exact inverses and
+    weights needed by subsequent evaluations remain internal learner state.
+    """
+
+    def __init__(self, problem, trajectories, *, policy_only=False):
+        super().__init__(problem, trajectories, policy_only=policy_only)
+        group_ids, groups, state_groups = {}, [], []
+        for state in problem.states:
+            row = tuple(problem.features[(state, action)] for action in problem.actions)
+            if row not in group_ids:
+                group_ids[row] = len(groups)
+                groups.append(row)
+            state_groups.append(group_ids[row])
+        self.feature_groups = tuple(groups)
+        self.state_groups = tuple(state_groups)
+
+    def _score_group(self, group, weights, work):
+        scores = tuple(sum((x*y for x, y in zip(features, weights)), F(0))
+                       for features in group)
+        work["action_scores"] += len(self.problem.actions)
+        return self.problem.actions[max(range(len(scores)), key=scores.__getitem__)]
+
+    def _greedy(self, policy, weights, work):
+        choices = tuple(self._score_group(group, weights, work) for group in self.feature_groups)
+        return tuple(choices[group] for group in self.state_groups)
