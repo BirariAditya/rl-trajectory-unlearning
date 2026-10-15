@@ -1,6 +1,6 @@
 # Research progress
 
-Last updated: 2026-10-14. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
+Last updated: 2026-10-15. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
 
 ## Current stage
 
@@ -20,6 +20,8 @@ Last updated: 2026-10-14. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
+
+- **15 October candidate implementation: 98 tests pass.** Added exact inverse-maintenance controls (including reuse of greedy outputs), a cumulative policy-sequence stability certificate, explicit policy-only output, atomic fallback, and sequential cancellation tests. [Proof and prior-art boundary](audits/lspi_policy_certificate.md). The small smoke compares policy sequences and baseline full traces; full cost/memory experiment is pending. No breakthrough or novelty claimed from the smoke.
 
 - **14 October: Checkpoint 05 complete.** 80 tests and [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38596853065) pass. Five methods, 63 runs, 162 requests, 810 exact trace matches; zero unequal memoized solve/action-score counts. Clean source `b576ee4101cecc23369cfda5848e1c2253ef59d8`; all 28 source/script hashes verified. [Report](checkpoints/05_lspi_matched_reuse.md), [tables](output/benchmarks/lspi_matched_checkpoint_summary.md), [archive](output/benchmarks/lspi_matched_checkpoint.json.gz). Replay with equal memoization has the lowest request/lifecycle medians in 5/7 settings, with two losing switch regimes preserved. No significance or novelty claim.
 

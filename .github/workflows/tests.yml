@@ -16,3 +16,4 @@ jobs:
       - run: python scripts/run_global_checkpoint.py --sizes 8 --seeds 0 --repeats 1 --output results/ci-global.json.gz
       - run: python scripts/run_lspi_demo.py --output results/ci-lspi.json
       - run: python scripts/run_lspi_checkpoint.py --matched-reuse --smoke --seeds 0 --repeats 1 --output results/ci-lspi-cost.json.gz
+      - run: python scripts/run_lspi_certificate.py --smoke --seeds 0 --repeats 1 --requests 2 --output results/ci-lspi-certificate.json.gz
