@@ -1,5 +1,7 @@
 # Research update: trajectory unlearning in offline RL
 
+**Latest update, 16 October:** We now have an exact selective-decision repair algorithm for the declared finite fixed-feature LSPI learner. It computes retained weights and rescores only decisions that cannot be certified unchanged. A shared initial bank of margin anchors also works on new policy branches, avoiding fresh margin indexes. All 114 tests pass; 81 runs cover 972 requests and 6,804 method executions with zero mismatches. On 128-state unique-feature data, preparation plus twelve requests is 62.033 versus 126.722 ms in stable data and 103.918 versus 139.231 ms in fragile data against a matched deduplicated full-trace comparator. The fragile data include real policy changes. Smaller cases lose and memory increases; the evidence is synthetic exact arithmetic, not neural or privacy validation. Older prediction-sensitivity work limits novelty, so this is a useful restricted-learner advance rather than a confirmed publishable breakthrough. [Checkpoint 07](checkpoints/07_selective_decision_repair.md) gives all comparisons and limitations.
+
 **Updated:** 15 October 2026 (older updates preserved below)
 **Repository:** [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private)  
 **Latest experimental source:** `97db508` (Checkpoint 06, 15 October); historical updates identify their earlier evidence below.

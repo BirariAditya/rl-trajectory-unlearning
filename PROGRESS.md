@@ -4,7 +4,7 @@ Last updated: 2026-10-16. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Current stage
 
-**Checkpoint 06 reached: cumulative policy-sequence certificate.** [The experiment](checkpoints/06_policy_sequence_certificate.md) has 98 passing tests, 45 runs / 900 requests / 3,600 method executions with zero mismatches under explicit output contracts. Certificate output is policy sequence/status only; weights/internal anchors are not unlearned. Stable 128-state/4-feature lifecycle cost is 78.241 ms versus 269.630 ms for classical inverse reuse (3.45x); fragile margins lose overall. Preparation, fallback and separate Python allocations are recorded. This is the strongest conditional computational result so far, **not confirmed publication novelty**. GPU experiments have not started.
+**Checkpoint 07 reached: exact selective decision repair.** [The experiment](checkpoints/07_selective_decision_repair.md) has 114 passing tests, 81 runs / 972 requests / 6,804 method executions with zero mismatches, plus 63 separate allocation passes. Shared-anchor repair handles changed policy branches and matches the full retained-only trace. With 128 unique-feature states, its lifecycle is 62.033 versus 126.722 ms in stable data (2.04x) and 103.918 versus 139.231 ms in fragile data (1.34x) against the matched deduplicated full-trace control. It uses more memory and loses in smaller cases. Stronger alias controls remove part of the earlier certificate advantage. **No confirmed publication novelty; GPU experiments have not started.**
 
 ## Stage tracker
 
@@ -15,11 +15,14 @@ Last updated: 2026-10-16. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
 | Baselines and cost ledger | Lean global and classical elimination checkpoint complete | 4,158 further method executions / 108 runs; full lifecycle and scratch costs charged; external optimized FTVI is not reproduced |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
-| Frozen-feature LSPI control | Policy-sequence certificate and inverse-control checkpoint complete | 3,600 matching executions under explicit policy-only/full-trace contracts; lifecycle and Python allocations measured; prediction-only/feature-alias controls and numerical verification remain |
+| Frozen-feature LSPI control | Selective/shared-anchor repair and feature/output controls complete | 6,804 matching executions, 63 allocation passes; changed-policy traces exact; numerical and external-validity gates remain |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
+
+- **16 October: Checkpoint 07 complete.** 114 local tests; 81 runs, 972 requests, 6,804 executions, zero mismatches; 63 allocation passes. Clean source `1fb3e300aaee97786be1b115c45b03606df042d2`, all 34 hashes verified. [Report](checkpoints/07_selective_decision_repair.md), [tables](output/benchmarks/lspi_unique_controls_summary.md), [archive](output/benchmarks/lspi_unique_controls.json.gz).
+- Shared-anchor repair has 2.04x stable and 1.34x fragile unique-feature lifecycle savings versus the matched full-trace control. The latter is 1.32x versus the fastest conventional full-trace control. Fragile unique data have 5/36 distinct final-policy-changing requests (15/108 with timing repeats); action scores fall 64.2%. Stable unique peak Python allocation rises from 121.6 to 171.0 KiB. Smaller losing cases are preserved; novelty is unestablished. Remote CI was not confirmed at this point because the API timed out.
 
 - **16 October candidate implementation:** added exact selective greedy repair,
   a shared initial-anchor bank for new policy branches, feature-deduplicated
@@ -74,7 +77,7 @@ Last updated: 2026-10-16. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 ## Next implementation tasks
 
 1. Use the [18 October preparation plan](presentation/2026-10-18/README.md) to study the equations, reproduce the demos, and rehearse all completed checkpoints. Explain the new policy-only contract before its timing results.
-2. Add unique-feature and feature-deduplicated controls with matched prediction-only output. Then test verified floating-point bounds, numerical factorization and conditioning; exact inverse reuse, 20-request sequences and separate Python allocations are now implemented.
+2. Feature-alias and matched-output controls are complete. Next test larger dimensions, non-opposite multi-action features, longer shared-anchor sequences, verified floating-point bounds and conditioning. Keep all setup, branch, memory and fallback costs.
 3. State and audit a deletion-specific theorem or advantage beyond established incremental LSPI before neural scale-up. If no such claim survives, reframe as a failure/evaluation study. User-identity batches, larger real tasks and GPU experiments remain staged.
 
 ## Limitations and open decisions
@@ -90,6 +93,8 @@ Last updated: 2026-10-16. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 At the end of each implementation session, update this file with the current stage, actual commands/results, output paths, completed tasks, next tasks, and blockers. Mark a gate complete only when its evidence exists. Keep failed experiments and scope limitations visible. Do not silently upgrade a hypothesis to a result.
 
 ## Activity log
+
+- **2026-10-16:** completed Checkpoint 07: selective decision repair and a frozen shared-anchor bank, exact changed-policy traces, seven matched controls, 114 tests and 6,804 checked executions. Removed alias/output confounders in new synthetic fixtures; retained speed failures and memory increases. Expanded the proof/prior-art review with KDD 2015 prediction sensitivity.
 
 - **2026-10-15:** completed Checkpoint 06 with a cumulative policy-sequence certificate, exact Sherman–Morrison controls, 98 tests, 900 checked requests and 20 separate allocation passes. Added proof and sequential-cancellation regression; found conditional lifecycle gains and fragile/fallback failures. Updated prior art with unchanged-prediction certification and AGT. Full-state deletion and publication novelty remain unestablished.
 

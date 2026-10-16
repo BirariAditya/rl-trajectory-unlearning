@@ -1,6 +1,6 @@
 # Presentation talk track — trajectory unlearning in offline RL
 
-**Updated 15 October for 18 October 2026; evidence through Checkpoint 06.** This comprehensive, modular 30-slide Markdown outline covers all work so far, with speaker notes and evidence links. The policy-sequence certificate is included with its narrower guarantee and adverse cases. The companion [learning guide](../../docs/LEARNING_GUIDE.md) explains the equations more slowly. This is presentation source material, not a rendered slide deck.
+**Updated 16 October for 18 October 2026; evidence through Checkpoint 07.** This comprehensive, modular 33-slide Markdown outline covers all work so far, with speaker notes and evidence links. The policy-sequence certificate is included with its narrower guarantee and adverse cases. The companion [learning guide](../../docs/LEARNING_GUIDE.md) explains the equations more slowly. This is presentation source material, not a rendered slide deck.
 
 ## Presentation contract
 
@@ -273,15 +273,46 @@ Use these terms consistently:
 
 **Evidence:** [Checkpoint 06](../../checkpoints/06_policy_sequence_certificate.md), [complete timing/allocation tables](../../output/benchmarks/lspi_certificate_summary.md), [source CI](https://github.com/BirariAditya/rl-trajectory-unlearning/actions/runs/38674439858).
 
-## Module F — Research decision
+## Module F — Changed-decision repair
 
-### Slide 30 — What we can defend on 18 October
+### Slide 30 — Skip safe decisions, repair the uncertain ones
 
-**On slide:** (1) Precise retained-only targets. (2) Tested exact tabular/full-trace learners. (3) A narrower policy-sequence certificate with conditional lifecycle gains. (4) Feature-alias, output-contract and numerical controls before a new-algorithm claim.
+**On slide:** Compute exact retained weights; use immutable indexed margins to identify uncertain feature groups; rescore them exactly. Real actions may change. Return the full retained-only trace.
 
-**Speaker notes:** Exact inverse reuse, 20-request sequences and separate Python allocation measurements are now complete. Next test unique features and feature-deduplicated prediction-only baselines, verified floating-point bounds and adverse conditioning. A paper claim must add a substantive deletion-specific guarantee or advantage beyond established incremental LSPI and unchanged-prediction certification. GPU experiments remain conditional; we have not measured retained-task return or privacy. Ask the advisor whether a policy-output guarantee is a useful target and what additional theorem/comparator is required. Do not assert conference acceptance probability or a confirmed novel algorithm.
+**Speaker notes:** The certificate in Slide 28 stops being useful when the whole sequence cannot be shown unchanged. Selective repair instead computes current weights exactly. For an anchor w0, a state radius rho is its smallest normalized action margin. With delta equal to the maximum coordinate difference between w and w0, only groups with rho <= delta need scoring. Equality must be checked because ties can switch actions. State indexing, matrix work and full policy copying remain charged. This screen is a standard inequality, not a novelty claim.
 
-**Evidence:** [Progress next steps](../../PROGRESS.md#next-implementation-tasks), [Checkpoint 03 updated phases](../../checkpoints/03_global_controls_and_lspi.md#updated-research-phases).
+**Evidence:** [Proof](../../audits/decision_repair_review.md), [learning guide Section 11](../../docs/LEARNING_GUIDE.md#11-repairing-changed-decisions-with-a-frozen-anchor-bank), [implementation](../../src/rl_unlearning/lspi_decision_repair.py).
+
+### Slide 31 — One anchor bank can serve new policy branches
+
+**On slide:** Greedy choices depend on weights and fixed features. A valid old margin anchor can therefore screen weights from a different input policy. Freeze the initial bank; query each anchor; use the smallest uncertain prefix.
+
+**Speaker notes:** The per-policy variant needs a new margin index when a new policy appears. The shared bank avoids those index builds while preserving exact output. It still must evaluate the new policy's retained matrix and weights. The bank can become stale and force many scores; its worst case is not cheap. Historical anchors remain internal, so this is not a full-state privacy guarantee.
+
+**Evidence:** [Implementation and independent review](../../audits/decision_repair_review.md#implementation-review), [tests](../../tests/test_lspi_decision_repair.py).
+
+### Slide 32 — Checkpoint 07: gains survive some stronger controls
+
+**On slide:** 114 tests; 81 runs / 972 requests / 6,804 executions, zero mismatches. Seven methods include deduplicated and policy-only controls. Full lifecycle: initial training/preparation plus 12 requests.
+
+| 128-state unique-feature setting | Deduplicated full trace | Shared-anchor full trace | Interpretation |
+| --- | ---: | ---: | --- |
+| Stable | 126.722 ms | 62.033 ms | 2.04x lifecycle improvement |
+| Fragile | 139.231 ms | 103.918 ms | 1.34x; some policies actually change |
+
+**Speaker notes:** The fastest conventional full-trace control in the fragile case is slightly better than deduplication at 137.671 ms, so the gain against that control is 1.32x. Fragile unique data have 5/36 distinct final-policy-changing requests, or 15/108 with timing repeats. Shared-bank action scores fall 64.2%, with no new margin indexes after preparation. Stable unique peak Python allocation rises from 121.6 to 171.0 KiB. The method loses on the tiny switch fixture. Aliased stable data show why controls matter: deduplication reduces baseline lifecycle from 125.980 to 50.134 ms and removes the certificate's lead. All data are synthetic and four-dimensional; no significance, real-task return or privacy claim.
+
+**Evidence:** [Checkpoint 07](../../checkpoints/07_selective_decision_repair.md), [full tables](../../output/benchmarks/lspi_unique_controls_summary.md), [raw archive](../../output/benchmarks/lspi_unique_controls.json.gz).
+
+## Module G — Research decision
+
+### Slide 33 — What we can defend on 18 October
+
+**On slide:** (1) Precise retained-only targets. (2) Exact tabular and full-trace LSPI repair. (3) Conditional gains survive unique-feature and matched-output controls. (4) Numerical, realistic-task and substantive novelty gates remain.
+
+**Speaker notes:** We now handle changed decisions and can reuse a frozen bank across new policy branches. This is a measurable advance over the previous unchanged-sequence certificate. Older prediction sensitivity, inverse updates and margin screening constrain novelty. Next test larger, multi-action, less structured features and verified floating-point conditioning; seek a deletion-specific theorem or convincing separation. GPU experiments remain staged. Do not assert conference acceptance probability or call this a confirmed breakthrough.
+
+**Evidence:** [Progress](../../PROGRESS.md), [latest checkpoint](../../checkpoints/07_selective_decision_repair.md).
 
 ## Claim–evidence table for slide checking
 
@@ -324,7 +355,7 @@ Use these terms consistently:
 
 **“Do the timing ratios prove significance?”** No. Three dataset seeds and timing repeats on those datasets are descriptive. The models are small and synthetic. The ratios are useful to expose failure regimes, not to estimate general deployment performance.
 
-**“What would change the conclusion before the talk?”** A separately archived comparison with unique features and matched prediction-only outputs, followed by verified numerical bounds and conditioning controls. Checkpoint 06 already adds exact inverse reuse and allocation measurements; its gains remain conditional and its output narrower. Further engineering gains still need a focused novelty argument.
+**“What changed most recently?”** Checkpoint 07 adds exact repair through changed decisions, unique-feature and output-matched controls, and a shared anchor bank. It preserves conditional gains with memory costs and losing cases. Numerical validation, less structured tasks and a substantive novelty argument remain open.
 
 ## Speaker claim-control card
 

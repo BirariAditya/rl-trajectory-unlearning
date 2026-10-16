@@ -1,6 +1,6 @@
 # Comprehensive research presentation: 18 October 2026
 
-Updated 15 October. This folder contains a **30-slide Markdown outline with speaker notes**, not a rendered PPTX. The scope covers the full work so far, with no assumed ten-minute limit. Experimental evidence is frozen through Checkpoint 06. New experiments must receive their own dated report before changing presentation claims.
+Updated 15 October. This folder contains a **33-slide Markdown outline with speaker notes**, not a rendered PPTX. The scope covers the full work so far, with no assumed ten-minute limit. Experimental evidence is frozen through Checkpoint 06. New experiments must receive their own dated report before changing presentation claims.
 
 ## Read and rehearse in this order
 
@@ -40,3 +40,6 @@ Evidence preparation and the matched-reuse continuation are complete. Study, reh
 ## Research position to communicate
 
 We have a tested research system and increasingly strong comparisons. Exactness is relative to a specified rational tabular learner or finite fixed-feature LSPI schedule. The latest certificate narrows the output to policy sequence/status and retains old internal anchors; it has conditional lifecycle gains but is not full-state erasure. None of the current mechanisms has established publication-level novelty. No neural/GPU, real-environment return, or privacy result has been produced. Present the proof, gains, negative cases and next controls together.
+
+
+16 October evidence addendum: [Checkpoint 07](../../checkpoints/07_selective_decision_repair.md) is complete. Slides 30-32 and learning-guide Section 11 explain selective/shared-anchor repair, changed policies, unique-feature controls and memory costs. Freeze these measured claims for rehearsal; numerical and novelty gates remain open.

@@ -81,3 +81,8 @@ Do not present a submission probability as a measurable number at this stage. A 
 5. Freeze a D4RL dataset snapshot and IQL implementation for the pilot. [Minari's D4RL page](https://minari.farama.org/datasets/D4RL/index.html) says some datasets are reproductions, so record identity and do not compare them as identical to original D4RL.
 
 The dated prior-art audits should be refreshed before a submission, especially the inaccessible title-only NeurIPS 2026 **CURe** listing noted in the [direct-RL audit](audits/direct_rl_prior_art.md).
+
+
+## 16 October reassessment after selective decision repair
+
+[Checkpoint 07](checkpoints/07_selective_decision_repair.md) adds a useful changed-policy result: exact retained-only traces with indexed selective scoring and a frozen bank reusable on new branches. Unique-feature and output-matched controls retain conditional gains, while alias deduplication removes part of the previous certificate advantage. More memory, small-case losses and four-dimensional synthetic arithmetic constrain the result. Prediction sensitivity after removals was already studied in [2015](https://arxiv.org/abs/1504.02870); the screening lemma and inverse updates are established ingredients. The defensible current claim is a tested execution strategy for a precisely specified RL learner. A new deletion-specific work theorem or compelling realistic separation remains necessary before a strong algorithmic novelty claim.

@@ -4,6 +4,8 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
+**16 October completed gate:** [Checkpoint 07](checkpoints/07_selective_decision_repair.md) passes 114 tests and 6,804 method executions. Shared-anchor repair matches full traces through decision changes and has conditional lifecycle gains with unique features. Feature-deduplicated and matched policy-only controls are now implemented; 63 allocation passes expose memory costs. Freeze this result for 18 October. Next pursue larger/multi-action features, verified floating-point conditioning and a substantive deletion-specific theorem; do not call margin screening or matrix updates novel. The active-gate paragraph below records the earlier experimental decision.
+
 **16 October active gate:** test selective decision repair using exact retained
 weights and immutable margin indexes; include a frozen bank shared across new
 input-policy branches. Compare against feature-deduplicated inverse updates and
@@ -28,7 +30,7 @@ checkpoint before changing the presentation story or beginning GPU work.
 | 15–16 October: targeted continuation | Match memoization across assembly methods; add only a bounded experiment with exact trace checks and complete cost reporting | Completed early on 14 October: Checkpoint 05; further expansion requires a separate archive |
 | 16–17 October: presentation freeze | Reconcile every numeric claim with archived evidence; rehearse comprehensive story and professor questions | Outline prepared; rehearsal remains |
 | 18 October: present and choose next gate | Present the full journey, including negative results; agree on the learner, baseline and proof needed for a paper claim | Planned |
-| After presentation: numerical / novelty gate | Unique-feature/prediction-only controls, verified floating-point bounds and conditioning; focused novelty audit before neural scale-up | Exact inverse control and Python allocation pilot complete; numerical and novelty gates remain |
+| After presentation: numerical / novelty gate | Larger/multi-action features, verified floating-point bounds and conditioning; focused novelty audit before neural scale-up | Unique-feature/prediction-only controls, shared-anchor repair and allocations complete; numerical and novelty gates remain |
 
 See the [presentation preparation plan](presentation/2026-10-18/README.md). These dates are work priorities, not scheduled automatic runs.
 
