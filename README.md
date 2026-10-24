@@ -26,6 +26,7 @@ python scripts/summarize_lspi_checkpoint.py results/lspi_matched_checkpoint.json
 python scripts/run_lspi_certificate.py --seeds 0 1 2 --repeats 3 --requests 20 --memory --output results/lspi_certificate.json.gz
 python scripts/summarize_lspi_certificate.py results/lspi_certificate.json.gz
 python scripts/run_lspi_unique_controls.py --seeds 0 1 2 --repeats 3 --requests 12 --memory --output results/lspi_unique_controls.json.gz
+python scripts/run_lspi_multiaction.py --seeds 0 1 --repeats 1 --requests 10 --output results/lspi_multiaction.json.gz --summary results/lspi_multiaction_summary.md
 ```
 
 The package is at `src/rl_unlearning`. It currently uses only the Python standard library. `delete_and_repair` removes specified trajectories, tries local Bellman backups, checks the retained-model residual and action gaps, and falls back to full warm-started value iteration when it cannot certify the policy. The returned `RepairResult` reports local backups and full residual checks separately.
@@ -61,3 +62,10 @@ returning a full exact trace. `LSPISharedAnchorRepairState` tests reuse of the
 initial anchor bank across new policy branches, paying every index query.
 [Proof and prior-art audit](audits/decision_repair_review.md). These classes retain
 historical internal anchors and do not certify full-state erasure or privacy.
+
+The multi-action runner extends those controls to three actions, unique
+non-opposite action features, dimensions 8 and 16, and 10 sequential deletion
+requests. It compares the complete LSPI trace with direct retained-only
+retraining and charges initial learning, preparation, and every request. The
+archived checkpoint uses two independently generated seeds and one timing pass
+per seed; its medians are descriptive rather than significance estimates.
