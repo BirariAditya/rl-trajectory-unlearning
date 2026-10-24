@@ -4,6 +4,16 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
+**24 October numerical candidate gate:** implement and test verified binary64
+LSPI replay before neural scale-up. Each approximate solve must carry an exact
+inverse-defect/residual error bound through every greedy comparison, with
+atomic exact fallback when a comparison is inconclusive. Preserve an
+ill-conditioned instance on which ordinary binary64 scoring silently returns
+the wrong policy sequence. Compare the complete lifecycle with exact
+policy-only inverse maintenance; standard verified linear algebra is prior art,
+so no novelty claim follows from the certificate alone. See
+[the proof and prior-art audit](audits/verified_float_lspi.md).
+
 **16 October completed gate:** [Checkpoint 07](checkpoints/07_selective_decision_repair.md) passes 114 tests and 6,804 method executions. Shared-anchor repair matches full traces through decision changes and has conditional lifecycle gains with unique features. Feature-deduplicated and matched policy-only controls are now implemented; 63 allocation passes expose memory costs. Freeze this result for 18 October. Next pursue larger/multi-action features, verified floating-point conditioning and a substantive deletion-specific theorem; do not call margin screening or matrix updates novel. The active-gate paragraph below records the earlier experimental decision.
 
 **16 October active gate:** test selective decision repair using exact retained

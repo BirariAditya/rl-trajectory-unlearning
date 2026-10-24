@@ -21,6 +21,8 @@ Last updated: 2026-10-24. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Latest validation
 
+- **24 October numerical candidate:** added binary64 LSPI replay with an exact a posteriori inverse-defect/residual bound for every greedy decision and atomic exact fallback. Seven focused tests cover the bound, well-conditioned certification, exact ties, singular rollback, policy switches, random sequential deletion, and runner accounting. An ill-conditioned two-state regression makes ordinary binary64 scoring choose the wrong action sequence at all three iterations; the verified path certifies the exact rational sequence. [Proof and prior-art audit](audits/verified_float_lspi.md). The first two-case smoke has 18 matching executions and no fallback, but verified lifecycle is slower than exact inverse maintenance in both cases; no efficiency or novelty claim is established. A clean repeated experiment remains pending.
+
 - **24 October: Checkpoint 08 complete.** 117 local tests; 8 independently generated runs, 80 sequential requests, 320 executions, zero full-trace mismatches. Clean source `720e0a3b206e19583b6542f9223489c0d48ff432`. [Report](checkpoints/08_multiaction_controls.md), [tables](output/benchmarks/lspi_multiaction_summary.md), [archive](output/benchmarks/lspi_multiaction.json.gz).
 - Stable three-action data certify every feature group without greedy scoring; selective repair is 1.62x and 1.36x faster than the matched inverse control at 32 and 128 states. In the fragile 128-state case, every final policy changes and selective repair is 24.7% slower despite 7.3% fewer action scores; shared anchors are 4.5% slower despite 15.1% fewer scores. The experiment has only two seeds and one timing execution per seed, so these are descriptive medians rather than significance estimates.
 
@@ -80,7 +82,7 @@ Last updated: 2026-10-24. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 ## Next implementation tasks
 
 1. Use the [18 October preparation plan](presentation/2026-10-18/README.md) to study the equations, reproduce the demos, and rehearse all completed checkpoints. Explain the new policy-only contract before its timing results.
-2. Feature-alias, matched-output, and bounded multi-action controls are complete. Next implement verified floating-point bounds and conditioning diagnostics, then repeat larger multi-action sequences with more independent seeds. Keep all setup, branch, memory and fallback costs.
+2. Feature-alias, matched-output, and bounded multi-action controls are complete. The exact-rational verified binary64 prototype is implemented; next run its clean matched experiment, then replace cubic rational verification with rigorous outward-rounded bounds if the cost profile justifies it. Keep all setup, verification, failed fast-path, memory and fallback costs.
 3. State and audit a deletion-specific theorem or advantage beyond established incremental LSPI before neural scale-up. If no such claim survives, reframe as a failure/evaluation study. User-identity batches, larger real tasks and GPU experiments remain staged.
 
 ## Limitations and open decisions

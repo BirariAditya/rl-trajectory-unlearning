@@ -27,6 +27,7 @@ python scripts/run_lspi_certificate.py --seeds 0 1 2 --repeats 3 --requests 20 -
 python scripts/summarize_lspi_certificate.py results/lspi_certificate.json.gz
 python scripts/run_lspi_unique_controls.py --seeds 0 1 2 --repeats 3 --requests 12 --memory --output results/lspi_unique_controls.json.gz
 python scripts/run_lspi_multiaction.py --seeds 0 1 --repeats 1 --requests 10 --output results/lspi_multiaction.json.gz --summary results/lspi_multiaction_summary.md
+python scripts/run_lspi_verified_float.py --seeds 0 1 --repeats 1 --requests 10 --output results/lspi_verified_float.json.gz --summary results/lspi_verified_float_summary.md
 ```
 
 The package is at `src/rl_unlearning`. It currently uses only the Python standard library. `delete_and_repair` removes specified trajectories, tries local Bellman backups, checks the retained-model residual and action gaps, and falls back to full warm-started value iteration when it cannot certify the policy. The returned `RepairResult` reports local backups and full residual checks separately.
@@ -69,3 +70,12 @@ requests. It compares the complete LSPI trace with direct retained-only
 retraining and charges initial learning, preparation, and every request. The
 archived checkpoint uses two independently generated seeds and one timing pass
 per seed; its medians are descriptive rather than significance estimates.
+
+`LSPIVerifiedFloatState` solves retained LSTD systems in binary64, then uses an
+exact approximate-inverse defect and residual bound to certify each greedy
+decision against the rational learner. Inconclusive requests fall back
+atomically to exact cached replay. Its output contract is the complete finite
+policy sequence rather than exact weights. The
+[proof and numerical prior-art boundary](audits/verified_float_lspi.md) includes
+an ill-conditioned regression where ordinary binary64 action scoring silently
+chooses the wrong sequence.
