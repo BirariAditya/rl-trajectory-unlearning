@@ -1,10 +1,10 @@
 # Research progress
 
-Last updated: 2026-10-16. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
+Last updated: 2026-10-24. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
 
 ## Current stage
 
-**Checkpoint 07 reached: exact selective decision repair.** [The experiment](checkpoints/07_selective_decision_repair.md) has 114 passing tests, 81 runs / 972 requests / 6,804 method executions with zero mismatches, plus 63 separate allocation passes. Shared-anchor repair handles changed policy branches and matches the full retained-only trace. With 128 unique-feature states, its lifecycle is 62.033 versus 126.722 ms in stable data (2.04x) and 103.918 versus 139.231 ms in fragile data (1.34x) against the matched deduplicated full-trace control. It uses more memory and loses in smaller cases. Stronger alias controls remove part of the earlier certificate advantage. **No confirmed publication novelty; GPU experiments have not started.**
+**Checkpoint 08 reached: multi-action fixed-feature controls.** [The experiment](checkpoints/08_multiaction_controls.md) has 117 passing tests and 8 independently generated runs / 80 sequential requests / 320 method executions with zero full-trace mismatches. Three-action, unique non-opposite features preserve exactness at dimensions 8 and 16. Selective repair beats the matched deduplicated inverse control by 1.62x and 1.36x on stable 32- and 128-state data, but is 24.7% slower on fragile 128-state data despite fewer action scores. This negative control shows that screening and exact-matrix costs can dominate decision-work savings. **No confirmed publication novelty, floating-point result, or GPU experiment.**
 
 ## Stage tracker
 
@@ -15,11 +15,14 @@ Last updated: 2026-10-16. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
 | Baselines and cost ledger | Lean global and classical elimination checkpoint complete | 4,158 further method executions / 108 runs; full lifecycle and scratch costs charged; external optimized FTVI is not reproduced |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
-| Frozen-feature LSPI control | Selective/shared-anchor repair and feature/output controls complete | 6,804 matching executions, 63 allocation passes; changed-policy traces exact; numerical and external-validity gates remain |
+| Frozen-feature LSPI control | Multi-action selective/shared-anchor controls complete | 7,124 matching executions across Checkpoints 07-08; three actions, unique non-opposite features and dimensions 8/16 tested; numerical and external-validity gates remain |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
+
+- **24 October: Checkpoint 08 complete.** 117 local tests; 8 independently generated runs, 80 sequential requests, 320 executions, zero full-trace mismatches. Clean source `720e0a3b206e19583b6542f9223489c0d48ff432`. [Report](checkpoints/08_multiaction_controls.md), [tables](output/benchmarks/lspi_multiaction_summary.md), [archive](output/benchmarks/lspi_multiaction.json.gz).
+- Stable three-action data certify every feature group without greedy scoring; selective repair is 1.62x and 1.36x faster than the matched inverse control at 32 and 128 states. In the fragile 128-state case, every final policy changes and selective repair is 24.7% slower despite 7.3% fewer action scores; shared anchors are 4.5% slower despite 15.1% fewer scores. The experiment has only two seeds and one timing execution per seed, so these are descriptive medians rather than significance estimates.
 
 - **16 October: Checkpoint 07 complete.** 114 local tests; 81 runs, 972 requests, 6,804 executions, zero mismatches; 63 allocation passes. Clean source `1fb3e300aaee97786be1b115c45b03606df042d2`, all 34 hashes verified. [Report](checkpoints/07_selective_decision_repair.md), [tables](output/benchmarks/lspi_unique_controls_summary.md), [archive](output/benchmarks/lspi_unique_controls.json.gz).
 - Shared-anchor repair has 2.04x stable and 1.34x fragile unique-feature lifecycle savings versus the matched full-trace control. The latter is 1.32x versus the fastest conventional full-trace control. Fragile unique data have 5/36 distinct final-policy-changing requests (15/108 with timing repeats); action scores fall 64.2%. Stable unique peak Python allocation rises from 121.6 to 171.0 KiB. Smaller losing cases are preserved; novelty is unestablished. Remote CI was not confirmed at this point because the API timed out.
@@ -77,7 +80,7 @@ Last updated: 2026-10-16. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 ## Next implementation tasks
 
 1. Use the [18 October preparation plan](presentation/2026-10-18/README.md) to study the equations, reproduce the demos, and rehearse all completed checkpoints. Explain the new policy-only contract before its timing results.
-2. Feature-alias and matched-output controls are complete. Next test larger dimensions, non-opposite multi-action features, longer shared-anchor sequences, verified floating-point bounds and conditioning. Keep all setup, branch, memory and fallback costs.
+2. Feature-alias, matched-output, and bounded multi-action controls are complete. Next implement verified floating-point bounds and conditioning diagnostics, then repeat larger multi-action sequences with more independent seeds. Keep all setup, branch, memory and fallback costs.
 3. State and audit a deletion-specific theorem or advantage beyond established incremental LSPI before neural scale-up. If no such claim survives, reframe as a failure/evaluation study. User-identity batches, larger real tasks and GPU experiments remain staged.
 
 ## Limitations and open decisions
