@@ -21,6 +21,7 @@ the certificate alone.
 from dataclasses import dataclass
 from fractions import Fraction as F
 import math
+import sys
 
 from .lspi_baselines import LSPICachedState, _change_successor
 from .lspi_control import LSPIWork, _fraction, _new_work, _outer_add
@@ -163,6 +164,12 @@ class LSPIVerifiedFloatState(LSPICachedState):
             work["target_rank_one_updates"] += 1
         return tuple(tuple(row) for row in matrix)
 
+    def _weight_certificate(self, matrix, rhs, inverse, approximate):
+        return _verified_weight_bound(matrix, rhs, inverse, approximate)
+
+    def _greedy_certificate(self, weights, error, work):
+        return _certified_greedy(self.problem, weights, error, work)
+
     def _verified_replay(self, covariance, rhs, successors, samples_read=0):
         problem = self.problem
         work = _new_work(samples_read)
@@ -178,12 +185,10 @@ class LSPIVerifiedFloatState(LSPICachedState):
                     matrix = self._assemble(covariance, successors, policy, work)
                     work["linear_solves"] += 1
                     inverse, approximate = _float_inverse_and_solve(matrix, rhs)
-                    weights, eta, residual, error = _verified_weight_bound(
+                    weights, eta, residual, error = self._weight_certificate(
                         matrix, tuple(rhs), inverse, approximate
                     )
-                    improved, clearance = _certified_greedy(
-                        problem, weights, error, work
-                    )
+                    improved, clearance = self._greedy_certificate(weights, error, work)
                     certificate = FloatEvaluationCertificate(
                         eta, residual, error, clearance
                     )
@@ -242,3 +247,156 @@ class LSPIVerifiedFloatState(LSPICachedState):
             for identifier in requested:
                 del self._data[identifier]
         return result
+
+
+_NEGATIVE_INFINITY = float("-inf")
+_POSITIVE_INFINITY = float("inf")
+
+
+def _down(value):
+    return math.nextafter(value, _NEGATIVE_INFINITY)
+
+
+def _up(value):
+    return math.nextafter(value, _POSITIVE_INFINITY)
+
+
+def _fraction_interval(value):
+    """Smallest adjacent-binary64 interval containing an exact Fraction."""
+    value = _fraction(value)
+    nearest = float(value)
+    if not math.isfinite(nearest):
+        raise ArithmeticError("exact value is outside binary64 range")
+    represented = F.from_float(nearest)
+    if represented < value:
+        return nearest, _up(nearest)
+    if represented > value:
+        return _down(nearest), nearest
+    return nearest, nearest
+
+
+def _interval_add(left, right):
+    return _down(left[0] + right[0]), _up(left[1] + right[1])
+
+
+def _interval_subtract(left, right):
+    return _down(left[0] - right[1]), _up(left[1] - right[0])
+
+
+def _interval_multiply(left, right):
+    products = (
+        left[0] * right[0], left[0] * right[1],
+        left[1] * right[0], left[1] * right[1],
+    )
+    if any(not math.isfinite(value) for value in products):
+        raise ArithmeticError("non-finite interval product")
+    return _down(min(products)), _up(max(products))
+
+
+def _interval_sum(terms):
+    total = (0.0, 0.0)
+    for term in terms:
+        total = _interval_add(total, term)
+    return total
+
+
+def _interval_abs_upper(interval):
+    return max(abs(interval[0]), abs(interval[1]))
+
+
+def _interval_weight_bound(matrix, rhs, inverse, weights):
+    """Outward-rounded version of the approximate-inverse theorem."""
+    if sys.float_info.radix != 2 or sys.float_info.mant_dig != 53:
+        raise ArithmeticError("interval verifier requires IEEE-754 binary64")
+    n = len(rhs)
+    matrix_intervals = tuple(
+        tuple(_fraction_interval(value) for value in row) for row in matrix
+    )
+    rhs_intervals = tuple(_fraction_interval(value) for value in rhs)
+    if any(not math.isfinite(value) for row in inverse for value in row):
+        raise ArithmeticError("non-finite approximate inverse")
+    inverse_intervals = tuple(tuple((value, value) for value in row) for row in inverse)
+    weight_intervals = tuple((value, value) for value in weights)
+
+    eta = 0.0
+    for i in range(n):
+        row_sum = 0.0
+        for j in range(n):
+            product = _interval_sum(
+                _interval_multiply(inverse_intervals[i][k], matrix_intervals[k][j])
+                for k in range(n)
+            )
+            defect = _interval_subtract((float(i == j), float(i == j)), product)
+            row_sum = _up(row_sum + _interval_abs_upper(defect))
+        eta = max(eta, row_sum)
+    if not math.isfinite(eta) or eta >= 1.0:
+        raise ArithmeticError("interval inverse defect cannot certify nonsingularity")
+
+    residual = []
+    residual_norm = 0.0
+    for i in range(n):
+        product = _interval_sum(
+            _interval_multiply(matrix_intervals[i][j], weight_intervals[j])
+            for j in range(n)
+        )
+        item = _interval_subtract(rhs_intervals[i], product)
+        residual.append(item)
+        residual_norm = max(residual_norm, _interval_abs_upper(item))
+    preconditioned_norm = 0.0
+    for i in range(n):
+        item = _interval_sum(
+            _interval_multiply(inverse_intervals[i][j], residual[j])
+            for j in range(n)
+        )
+        preconditioned_norm = max(preconditioned_norm, _interval_abs_upper(item))
+    denominator = _down(1.0 - eta)
+    if denominator <= 0.0:
+        raise ArithmeticError("interval inverse defect has no positive denominator")
+    error = _up(preconditioned_norm / denominator)
+    if not math.isfinite(error):
+        raise ArithmeticError("non-finite interval error bound")
+    return tuple(weights), eta, residual_norm, error
+
+
+def _interval_certified_greedy(problem, weights, error_bound, work):
+    improved = []
+    minimum_clearance = _POSITIVE_INFINITY
+    for state in problem.states:
+        rows = tuple(problem.features[(state, action)] for action in problem.actions)
+        approximate_scores = tuple(
+            sum(float(feature) * weight for feature, weight in zip(row, weights))
+            for row in rows
+        )
+        if any(not math.isfinite(score) for score in approximate_scores):
+            raise ArithmeticError("non-finite approximate action score")
+        work["action_scores"] += len(problem.actions)
+        chosen_index = max(range(len(rows)), key=approximate_scores.__getitem__)
+        chosen = rows[chosen_index]
+        for index, row in enumerate(rows):
+            if index == chosen_index or row == chosen:
+                continue
+            difference = tuple(x - y for x, y in zip(chosen, row))
+            gap = _interval_sum(
+                _interval_multiply(_fraction_interval(value), (weight, weight))
+                for value, weight in zip(difference, weights)
+            )
+            norm_upper = _fraction_interval(sum(map(abs, difference), F(0)))[1]
+            uncertainty = _up(norm_upper * error_bound)
+            clearance = _down(gap[0] - uncertainty)
+            if clearance <= 0.0:
+                raise ArithmeticError("greedy action is not interval certified")
+            minimum_clearance = min(minimum_clearance, clearance)
+        improved.append(problem.actions[chosen_index])
+    if minimum_clearance == _POSITIVE_INFINITY:
+        minimum_clearance = 0.0
+    return tuple(improved), minimum_clearance
+
+
+class LSPIIntervalVerifiedFloatState(LSPIVerifiedFloatState):
+    """Use outward-rounded binary64 intervals for the verification products."""
+
+    def _weight_certificate(self, matrix, rhs, inverse, approximate):
+        return _interval_weight_bound(matrix, rhs, inverse, approximate)
+
+    def _greedy_certificate(self, weights, error, work):
+        return _interval_certified_greedy(self.problem, weights, error, work)

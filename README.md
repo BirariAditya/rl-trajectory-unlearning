@@ -73,9 +73,10 @@ per seed; its medians are descriptive rather than significance estimates.
 
 `LSPIVerifiedFloatState` solves retained LSTD systems in binary64, then uses an
 exact approximate-inverse defect and residual bound to certify each greedy
-decision against the rational learner. Inconclusive requests fall back
-atomically to exact cached replay. Its output contract is the complete finite
-policy sequence rather than exact weights. The
+decision against the rational learner. `LSPIIntervalVerifiedFloatState` applies
+the same theorem with outward-rounded binary64 intervals. Inconclusive requests
+fall back atomically to exact cached replay. Their output contract is the
+complete finite policy sequence rather than exact weights. The
 [proof and numerical prior-art boundary](audits/verified_float_lspi.md) includes
 an ill-conditioned regression where ordinary binary64 action scoring silently
 chooses the wrong sequence.

@@ -9,8 +9,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from rl_unlearning.lspi_control import LSPIProblem, scratch_lspi
 from rl_unlearning.lspi_verified_float import (
+    LSPIIntervalVerifiedFloatState,
     LSPIVerifiedFloatState,
+    _fraction_interval,
     _float_inverse_and_solve,
+    _interval_weight_bound,
     _verified_weight_bound,
 )
 from rl_unlearning.lspi_baselines import LSPICachedState
@@ -66,6 +69,22 @@ class VerifiedFloatTests(unittest.TestCase):
         )
         self.assertLess(eta, 1)
         self.assertLessEqual(max(abs(x - y) for x, y in zip(weights, exact)), error)
+        _, interval_eta, _, interval_error = _interval_weight_bound(
+            matrix, rhs, inverse, approximate
+        )
+        self.assertGreaterEqual(interval_eta, float(eta))
+        self.assertGreaterEqual(interval_error, float(error))
+        self.assertLessEqual(
+            max(abs(float(x - y)) for x, y in zip(weights, exact)), interval_error
+        )
+
+    def test_outward_fraction_conversion_contains_exact_values(self):
+        rng = random.Random(771)
+        for _ in range(1000):
+            value = F(rng.randrange(-10**9, 10**9), rng.randrange(1, 10**9))
+            lower, upper = _fraction_interval(value)
+            self.assertLessEqual(F.from_float(lower), value)
+            self.assertLessEqual(value, F.from_float(upper))
 
     def test_small_margin_uses_exact_fallback(self):
         tiny = F(1, 10**18)
@@ -135,6 +154,11 @@ class VerifiedFloatTests(unittest.TestCase):
         self.compare(verified, reference)
         self.assertTrue(verified.certified)
         self.assertFalse(verified.used_fallback)
+        interval = LSPIIntervalVerifiedFloatState(problem, logs).replay()
+        self.compare(interval, reference)
+        # Ordinary float scoring proposes the wrong action. The interval path
+        # detects that it cannot certify it and invokes the exact fallback.
+        self.assertTrue(interval.used_fallback)
 
     def test_policy_switch_and_random_sequential_requests_never_false_certify(self):
         problem, logs, retained = switch_fixture(iterations=6)
@@ -179,6 +203,36 @@ class VerifiedFloatTests(unittest.TestCase):
         self.assertGreater(certified, 0)
         self.assertGreaterEqual(fallback, 0)
 
+    def test_interval_verifier_matches_random_sequential_requests(self):
+        rng = random.Random(931)
+        certified = 0
+        for trial in range(15):
+            d = 2 + trial % 3
+            features = {
+                (state, action): tuple(F(rng.randrange(-5, 6), 3) for _ in range(d))
+                for state in range(3) for action in range(3)
+            }
+            problem = LSPIProblem(
+                (0, 1, 2), (0, 1, 2), features, dict.fromkeys(range(3), 0),
+                gamma=F(1, 4), regularization=4, iterations=5,
+            )
+            logs = [
+                episode(str(i),
+                        (rng.randrange(3), rng.randrange(3), rng.randrange(-2, 3),
+                         rng.randrange(3)),
+                        (rng.randrange(3), rng.randrange(3), rng.randrange(-2, 3), None))
+                for i in range(15)
+            ]
+            if scratch_lspi(problem, logs).status == "singular":
+                continue
+            state = LSPIIntervalVerifiedFloatState(problem, logs)
+            for identifier in range(3):
+                logs = [item for item in logs if item.trajectory_id != str(identifier)]
+                result = state.delete_and_replay((str(identifier),))
+                self.compare(result, scratch_lspi(problem, logs))
+                certified += result.certified
+        self.assertGreater(certified, 0)
+
     def test_invalid_and_singular_requests_are_atomic(self):
         problem = LSPIProblem(
             (0,), (0,), {(0, 0): (1,)}, {0: 0},
@@ -202,13 +256,14 @@ class VerifiedFloatTests(unittest.TestCase):
                 item["policy_sequence_match"]
                 for item in request["methods"].values()
             ))
-            self.assertTrue(request["methods"]["verified_float"]["certified"])
+            self.assertTrue(request["methods"]["verified_rational"]["certified"])
+            self.assertTrue(request["methods"]["verified_interval"]["certified"])
         report = {
             "runs": [row], "git_commit": "test", "git_dirty": True,
             "methods": METHODS,
         }
         text = summarize(report)
-        self.assertIn("6 executions; 0 mismatches", text)
+        self.assertIn("8 executions; 0 mismatches", text)
         self.assertIn("2 / 2", text)
 
 

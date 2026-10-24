@@ -96,9 +96,13 @@ before any neural offline-RL claim.
 
 ## Cost and remaining gate
 
-The current verifier performs exact rational `R A`, residual, and `R r`
-products. This is cubic in feature dimension and can be slower than exact
-inverse maintenance despite avoiding exact elimination. Wall time includes the
-failed fast path when fallback occurs. The next algorithmic test is a rigorous
-outward-rounded or interval implementation that avoids large rational products,
-with the exact-rational verifier retained as its oracle.
+The exact-rational verifier performs rational `R A`, residual, and `R r`
+products. The second implementation encloses every exact-input conversion and
+every binary64 product, sum, subtraction, and final division by stepping one
+representable value outward with `math.nextafter`. It requires the recorded
+platform to expose radix-2, 53-bit IEEE-754 floats, rejects nonfinite
+intermediates, and uses the upper interval norm in the same theorem. Random
+tests compare its bound with the rational verifier and exact solutions. This is
+still cubic in feature dimension, and wall time includes the failed fast path
+when fallback occurs. The rational verifier remains the oracle for the interval
+implementation.

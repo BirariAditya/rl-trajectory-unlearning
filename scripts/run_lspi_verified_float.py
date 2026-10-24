@@ -18,12 +18,17 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from rl_unlearning.lspi_control import scratch_lspi
 from rl_unlearning.lspi_inverse import LSPIInverseDeduplicatedState
-from rl_unlearning.lspi_verified_float import LSPIVerifiedFloatState
+from rl_unlearning.lspi_verified_float import (
+    LSPIIntervalVerifiedFloatState,
+    LSPIVerifiedFloatState,
+)
 from run_baselines import git
 from run_lspi_multiaction import CASES, dataset
 
 
-METHODS = ("scratch_retrain", "inverse_policy", "verified_float")
+METHODS = (
+    "scratch_retrain", "inverse_policy", "verified_rational", "verified_interval"
+)
 
 
 def contract(result):
@@ -46,8 +51,10 @@ def initialize(method, problem, logs):
         return None, scratch_lspi(problem, logs)
     if method == "inverse_policy":
         state = LSPIInverseDeduplicatedState(problem, logs, policy_only=True)
-    else:
+    elif method == "verified_rational":
         state = LSPIVerifiedFloatState(problem, logs)
+    else:
+        state = LSPIIntervalVerifiedFloatState(problem, logs)
     return state, state.replay()
 
 
@@ -175,32 +182,33 @@ def summarize(report):
         "",
         "## Verification outcomes",
         "",
-        "| Regime | States | Dimension | Certified requests | Exact fallbacks | Maximum inverse defect (decimal) |",
-        "| --- | ---: | ---: | ---: | ---: | ---: |",
+        "| Regime | States | Dimension | Verifier | Certified requests | Exact fallbacks | Maximum inverse defect (decimal) |",
+        "| --- | ---: | ---: | --- | ---: | ---: | ---: |",
     ]
     for key in groups:
         selected = [run for run in runs if (
             run["regime"], run["states"], run["dimension"], run["actions"]
         ) == key]
-        records = [
-            request["methods"]["verified_float"]
-            for run in selected for request in run["requests"]
-        ]
-        defects = [float(F(item["max_inverse_defect"])) for item in records
-                   if item["max_inverse_defect"] is not None]
-        lines.append(
-            f"| {key[0]} | {key[1]} | {key[2]} | "
-            f"{sum(item['certified'] for item in records)} / {len(records)} | "
-            f"{sum(item['used_fallback'] for item in records)} | "
-            f"{max(defects, default=0):.3e} |"
-        )
+        for method in ("verified_rational", "verified_interval"):
+            records = [
+                request["methods"][method]
+                for run in selected for request in run["requests"]
+            ]
+            defects = [float(F(item["max_inverse_defect"])) for item in records
+                       if item["max_inverse_defect"] is not None]
+            lines.append(
+                f"| {key[0]} | {key[1]} | {key[2]} | {method} | "
+                f"{sum(item['certified'] for item in records)} / {len(records)} | "
+                f"{sum(item['used_fallback'] for item in records)} | "
+                f"{max(defects, default=0):.3e} |"
+            )
     lines += [
         "",
         "## Interpretation limits",
         "",
         "- The certificate proves equality of the finite LSPI policy sequence, not equality of floating weights or a full matrix trace.",
-        "- Verification treats computed binary64 numbers as exact dyadic rationals. The inverse-defect theorem bounds the exact rational solution; inconclusive cases use exact replay.",
-        "- Exact verification performs rational matrix products. Any speed result must therefore be measured rather than inferred from binary64 arithmetic.",
+        "- The rational verifier treats computed binary64 numbers as exact dyadic rationals. The interval verifier instead encloses every conversion, product, and sum with directed `nextafter` expansion. Both apply the same inverse-defect theorem; inconclusive cases use exact replay.",
+        "- The rational verifier performs exact matrix products; the interval verifier performs cubic outward-rounded binary64 products. Any speed result is measured rather than inferred.",
         "- These synthetic fixed-feature tasks do not establish neural-RL unlearning, privacy, historical-state erasure, universal speedup, or publication novelty.",
     ]
     return "\n".join(lines)
