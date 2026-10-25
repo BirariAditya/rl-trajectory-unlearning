@@ -34,6 +34,11 @@ CROSSOVER_CASES = tuple(
     for regime in ("stable", "fragile")
     for states, dimension in ((64, 24), (96, 32))
 )
+HIGH_DIM_CASES = (
+    ("fragile", 128, 48, 3),
+    ("fragile", 128, 64, 3),
+)
+HIGH_DIM_METHODS = ("scratch_retrain", "inverse_policy", "verified_interval")
 
 
 def contract(result):
@@ -87,10 +92,10 @@ def record(result, reference, seconds):
     }
 
 
-def run(case, seed, repeat, requests):
+def run(case, seed, repeat, requests, methods=METHODS):
     problem, logs, batches = dataset(*case, seed, requests=requests)
     rng = random.Random(31000 + seed * 100 + repeat)
-    order = list(METHODS)
+    order = list(methods)
     rng.shuffle(order)
     preparation_order = list(order)
     states, initial, times = {}, {}, {}
@@ -100,7 +105,7 @@ def run(case, seed, repeat, requests):
         times[method] = perf_counter() - started
     reference = initial["scratch_retrain"]
     preparation = {
-        method: record(initial[method], reference, times[method]) for method in METHODS
+        method: record(initial[method], reference, times[method]) for method in methods
     }
 
     retained = logs
@@ -127,7 +132,7 @@ def run(case, seed, repeat, requests):
             "method_order": list(order),
             "methods": {
                 method: record(outputs[method], reference, request_times[method])
-                for method in METHODS
+                for method in methods
             },
         })
         if reference.status != "singular":
@@ -142,6 +147,7 @@ def run(case, seed, repeat, requests):
 
 def summarize(report):
     runs = report["runs"]
+    methods = tuple(report["methods"])
     requests = [request for run_record in runs for request in run_record["requests"]]
     mismatches = sum(
         not item["policy_sequence_match"]
@@ -157,21 +163,21 @@ def summarize(report):
         f"Source `{report['git_commit']}`; clean at launch: {not report['git_dirty']}.",
         "",
         f"**{len(runs)} runs, {len(requests)} requests, "
-        f"{len(requests) * len(METHODS)} executions; {mismatches} mismatches.**",
+        f"{len(requests) * len(methods)} executions; {mismatches} mismatches.**",
         "",
         "Lifecycle time includes construction, initial learning, verification, exact fallback, and every sequential request. Direct retained-only scratch LSPI is the reference.",
         "",
         "## Lifecycle median milliseconds",
         "",
-        "| Regime | States | Dimension | " + " | ".join(METHODS) + " |",
-        "| --- | ---: | ---: | " + " | ".join("---:" for _ in METHODS) + " |",
+        "| Regime | States | Dimension | " + " | ".join(methods) + " |",
+        "| --- | ---: | ---: | " + " | ".join("---:" for _ in methods) + " |",
     ]
     for key in groups:
         selected = [run for run in runs if (
             run["regime"], run["states"], run["dimension"], run["actions"]
         ) == key]
         values = []
-        for method in METHODS:
+        for method in methods:
             lifecycles = [
                 run["preparation"][method]["seconds"]
                 + sum(request["methods"][method]["seconds"] for request in run["requests"])
@@ -194,7 +200,7 @@ def summarize(report):
         selected = [run for run in runs if (
             run["regime"], run["states"], run["dimension"], run["actions"]
         ) == key]
-        for method in ("verified_rational", "verified_interval"):
+        for method in (name for name in methods if name.startswith("verified_")):
             records = [
                 request["methods"][method]
                 for run in selected for request in run["requests"]
@@ -229,6 +235,10 @@ def main():
         "--crossover", action="store_true",
         help="run dimensions 24 and 32 to test the exact/verified cost crossover",
     )
+    parser.add_argument(
+        "--highdim", action="store_true",
+        help="run fragile dimensions 48 and 64 with the lean strong-baseline matrix",
+    )
     parser.add_argument("--output", type=Path,
                         default=ROOT / "results/lspi_verified_float.json.gz")
     parser.add_argument("--summary", type=Path)
@@ -239,13 +249,15 @@ def main():
     if args.summarize:
         report = json.loads(gzip.decompress(args.summarize.read_bytes()))
     else:
-        if args.smoke and args.crossover:
-            parser.error("--smoke and --crossover are mutually exclusive")
+        if sum((args.smoke, args.crossover, args.highdim)) > 1:
+            parser.error("--smoke, --crossover and --highdim are mutually exclusive")
         cases = (
             (CASES[0], CASES[-1]) if args.smoke
             else CROSSOVER_CASES if args.crossover
+            else HIGH_DIM_CASES if args.highdim
             else CASES
         )
+        methods = HIGH_DIM_METHODS if args.highdim else METHODS
         report = {
             "created_at": datetime.now(timezone.utc).isoformat(),
             "git_commit": git("rev-parse", "HEAD"),
@@ -254,7 +266,7 @@ def main():
             "platform": platform.platform(),
             "arguments": {key: str(value) if isinstance(value, Path) else value
                           for key, value in vars(args).items()},
-            "methods": METHODS,
+            "methods": methods,
             "runs": [],
             "source_sha256": {
                 str(file.relative_to(ROOT)): hashlib.sha256(file.read_bytes()).hexdigest()
@@ -265,7 +277,9 @@ def main():
         for case in cases:
             for seed in args.seeds:
                 for repeat in range(args.repeats):
-                    report["runs"].append(run(case, seed, repeat, args.requests))
+                    report["runs"].append(
+                        run(case, seed, repeat, args.requests, methods=methods)
+                    )
                     print(f"{case} seed={seed} repeat={repeat}: done", flush=True)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_bytes(
