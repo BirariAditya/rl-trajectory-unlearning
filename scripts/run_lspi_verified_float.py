@@ -29,6 +29,11 @@ from run_lspi_multiaction import CASES, dataset
 METHODS = (
     "scratch_retrain", "inverse_policy", "verified_rational", "verified_interval"
 )
+CROSSOVER_CASES = tuple(
+    (regime, states, dimension, 3)
+    for regime in ("stable", "fragile")
+    for states, dimension in ((64, 24), (96, 32))
+)
 
 
 def contract(result):
@@ -220,6 +225,10 @@ def main():
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--requests", type=int, default=10)
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument(
+        "--crossover", action="store_true",
+        help="run dimensions 24 and 32 to test the exact/verified cost crossover",
+    )
     parser.add_argument("--output", type=Path,
                         default=ROOT / "results/lspi_verified_float.json.gz")
     parser.add_argument("--summary", type=Path)
@@ -230,7 +239,13 @@ def main():
     if args.summarize:
         report = json.loads(gzip.decompress(args.summarize.read_bytes()))
     else:
-        cases = (CASES[0], CASES[-1]) if args.smoke else CASES
+        if args.smoke and args.crossover:
+            parser.error("--smoke and --crossover are mutually exclusive")
+        cases = (
+            (CASES[0], CASES[-1]) if args.smoke
+            else CROSSOVER_CASES if args.crossover
+            else CASES
+        )
         report = {
             "created_at": datetime.now(timezone.utc).isoformat(),
             "git_commit": git("rev-parse", "HEAD"),
