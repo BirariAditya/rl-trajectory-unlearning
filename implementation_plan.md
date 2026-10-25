@@ -4,6 +4,18 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
+**25 October completed numerical gate:** [Checkpoint 09](checkpoints/09_verified_numerical_replay.md)
+adds exact-rational and outward-rounded verification of binary64 LSPI deletion
+replay. The complete finite policy sequence matches direct retained-only LSPI
+in 504 method executions, and an adversarial regression exposes a silent wrong
+policy from ordinary binary64 scoring. Interval verification loses to exact
+inverse maintenance at dimensions 8–32, then wins by 1.35x and 1.44x at
+dimensions 48 and 64 across the full lifecycle. Verified numerical linear
+algebra and LSPI updates are prior art; treat this as a bounded project
+breakthrough while the publication-novelty and external-validity gates remain
+open. The next evidence should use repeated timings, memory, and frozen
+features from a nontrivial offline-RL task before requesting GPU neural work.
+
 **24 October numerical candidate gate:** implement and test verified binary64
 LSPI replay before neural scale-up. Each approximate solve must carry an exact
 inverse-defect/residual error bound through every greedy comparison, with

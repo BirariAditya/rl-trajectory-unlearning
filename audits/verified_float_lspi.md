@@ -57,10 +57,12 @@ The regression suite contains a two-state, two-action, two-feature LSPI problem
 with feature scales from `10^-12` to `10^9`, discount `0.999999`, and ridge
 `10^-12`. Ordinary binary64 solves followed by ordinary binary64 dot products
 choose `((0,0),(0,0),(0,0))`. Exact rational LSPI chooses
-`((1,0),(1,0),(1,0))`. The verified path returns the exact sequence and accepts
-all three evaluations. This establishes a concrete silent policy error in the
-naive numerical path and a successful certificate on that instance; it does
-not establish frequency on realistic data.
+`((1,0),(1,0),(1,0))`. The rational verifier returns the exact sequence and
+accepts all three evaluations. The interval verifier detects that the ordinary
+binary64 proposal is not certifiable and returns the exact sequence through
+fallback. This establishes a concrete silent policy error in the naive
+numerical path and two safe outcomes; it does not establish frequency on
+realistic data.
 
 ## Prior-art boundary
 
@@ -94,6 +96,13 @@ broad claim to “exact RL unlearning.” The recent
 retraining references, retained-utility anchors, and multiple privacy attacks
 before any neural offline-RL claim.
 
+A second focused search on 25 October used combinations of “verified LSPI,”
+“verified LSTD,” numerical policy certificates, trajectory deletion, and exact
+policy sequences. It recovered LSPI numerical/convergence literature and
+general machine-unlearning verification, but no primary work with this exact
+deletion-plus-numerical-certificate contract. This is a search result, not proof
+of priority.
+
 ## Cost and remaining gate
 
 The exact-rational verifier performs rational `R A`, residual, and `R r`
@@ -106,3 +115,12 @@ tests compare its bound with the rational verifier and exact solutions. This is
 still cubic in feature dimension, and wall time includes the failed fast path
 when fallback occurs. The rational verifier remains the oracle for the interval
 implementation.
+
+The completed high-dimensional experiment finds the empirical crossover that
+was absent at dimensions 8–32. Across two independently generated fragile
+datasets and two sequential deletions per dataset, the interval verifier is
+1.35x faster than exact policy-only inverse maintenance at dimension 48 and
+1.44x faster at dimension 64. It wins on all four individual seeds/settings,
+certifies every request without fallback, and matches direct retained-only
+scratch LSPI. These are descriptive synthetic timings, not an asymptotic or
+significance result.
