@@ -4,12 +4,12 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
-**27 October external-validity gate in progress:** the verified-float runner now
-has separate Python-allocation passes and explicit independent-dataset versus
-same-dataset timing semantics. The clean high-dimensional archive must use
-multiple seeds, retain exact inverse maintenance as the strong control, and
-report all lifecycle and allocation boundaries. Only after that archive should
-the same retained-only contract be tested on frozen features derived from a
+**27 October external-validity gate in progress:** [Checkpoint 10A](checkpoints/10a_repeated_highdim_allocations.md)
+adds clean three-seed timing and separate Python-allocation evidence. The
+median high-dimensional crossover survives, and interval verification uses
+3.83--4.91x less peak traced Python allocation, but two of six datasets lose on
+lifecycle time. Add paired retiming before claiming robust speed. The same
+retained-only contract must next be tested on frozen features derived from a
 nontrivial offline-RL dataset. Neural feature extraction and IQL remain the
 first GPU-requiring stage and must not begin before the CPU bridge validates.
 
