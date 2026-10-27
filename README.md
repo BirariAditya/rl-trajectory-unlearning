@@ -1,6 +1,6 @@
 # RL trajectory unlearning research
 
-**Current stage: Checkpoint 09 reached: verified numerical LSPI replay.** [The experiment](checkpoints/09_verified_numerical_replay.md) has 126 passing tests and 20 clean runs / 128 sequential requests / 504 method executions with zero policy-sequence mismatches. Binary64 solves are certified against the exact rational LSPI policy sequence using outward-rounded inverse-defect and residual bounds with atomic exact fallback. A constructed ill-conditioned case exposes a silent wrong policy from ordinary binary64 scoring. At dimensions 48 and 64, interval verification is 1.35x and 1.44x faster than exact policy-only inverse maintenance over the full lifecycle; it loses at dimensions 8–32. **This is a bounded fixed-feature breakthrough, not confirmed publication novelty, privacy unlearning, or a neural-RL result. GPU experiments have not started.**
+**Current stage: Checkpoint 10 external-validity gate in progress.** [Checkpoint 09](checkpoints/09_verified_numerical_replay.md) established exact policy-sequence certification and a descriptive high-dimensional crossover. The runner now supports separate Python-allocation passes and distinguishes independent dataset seeds from repeated timing on one dataset; 127 tests pass. The next clean archive repeats dimensions 48 and 64 across independently generated seeds before connecting the fixed-feature learner to nontrivial offline-RL trajectories. **No neural-RL, privacy-unlearning, universal-speedup, or publication-novelty claim is established, and GPU experiments have not started.**
 
 For the comprehensive 18 October presentation, start with the [learning guide](docs/LEARNING_GUIDE.md), [33-slide outline and speaker notes](presentation/2026-10-18/TALK_TRACK.md), and [preparation plan](presentation/2026-10-18/README.md).
 
@@ -30,6 +30,7 @@ python scripts/run_lspi_multiaction.py --seeds 0 1 --repeats 1 --requests 10 --o
 python scripts/run_lspi_verified_float.py --seeds 0 1 --repeats 1 --requests 10 --output results/lspi_verified_float.json.gz --summary results/lspi_verified_float_summary.md
 python scripts/run_lspi_verified_float.py --crossover --seeds 0 1 --repeats 1 --requests 5 --output results/lspi_verified_crossover.json.gz --summary results/lspi_verified_crossover_summary.md
 python scripts/run_lspi_verified_float.py --highdim --seeds 0 1 --repeats 1 --requests 2 --output results/lspi_verified_highdim.json.gz --summary results/lspi_verified_highdim_summary.md
+python scripts/run_lspi_verified_float.py --highdim --seeds 0 1 2 --repeats 1 --requests 2 --memory --memory-methods inverse_policy verified_interval --output results/lspi_verified_highdim_repeated.json.gz --summary results/lspi_verified_highdim_repeated_summary.md
 ```
 
 The package is at `src/rl_unlearning`. It currently uses only the Python standard library. `delete_and_repair` removes specified trajectories, tries local Bellman backups, checks the retained-model residual and action gaps, and falls back to full warm-started value iteration when it cannot certify the policy. The returned `RepairResult` reports local backups and full residual checks separately.
@@ -82,3 +83,9 @@ complete finite policy sequence rather than exact weights. The
 [proof and numerical prior-art boundary](audits/verified_float_lspi.md) includes
 an ill-conditioned regression where ordinary binary64 action scoring silently
 chooses the wrong sequence.
+Use `--memory` for separate `tracemalloc` passes. Generated problems, trajectory
+logs, and deletion batches are excluded from those measurements; construction,
+initial replay, verifier/fallback state, and sequential requests are included.
+These values are Python allocations rather than process RSS or accelerator
+memory. Different seeds are independent datasets, whereas `--repeats` re-times
+one generated dataset with a newly randomized method order.

@@ -4,6 +4,15 @@ Revised 29 September 2026 after the [novelty reassessment](novelty_reassessment.
 
 ### Research order and claim gates
 
+**27 October external-validity gate in progress:** the verified-float runner now
+has separate Python-allocation passes and explicit independent-dataset versus
+same-dataset timing semantics. The clean high-dimensional archive must use
+multiple seeds, retain exact inverse maintenance as the strong control, and
+report all lifecycle and allocation boundaries. Only after that archive should
+the same retained-only contract be tested on frozen features derived from a
+nontrivial offline-RL dataset. Neural feature extraction and IQL remain the
+first GPU-requiring stage and must not begin before the CPU bridge validates.
+
 **25 October completed numerical gate:** [Checkpoint 09](checkpoints/09_verified_numerical_replay.md)
 adds exact-rational and outward-rounded verification of binary64 LSPI deletion
 replay. The complete finite policy sequence matches direct retained-only LSPI

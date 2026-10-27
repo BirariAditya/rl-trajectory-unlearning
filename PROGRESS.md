@@ -1,10 +1,10 @@
 # Research progress
 
-Last updated: 2026-10-25. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
+Last updated: 2026-10-27. Repository: [BirariAditya/rl-trajectory-unlearning](https://github.com/BirariAditya/rl-trajectory-unlearning) (private).
 
 ## Current stage
 
-**Checkpoint 09 reached: verified numerical LSPI replay.** [The experiment](checkpoints/09_verified_numerical_replay.md) has 126 passing tests and 20 clean runs / 128 sequential requests / 504 method executions with zero policy-sequence mismatches. Binary64 solves are certified against the exact rational LSPI policy sequence using outward-rounded inverse-defect and residual bounds with atomic exact fallback. A constructed ill-conditioned case exposes a silent wrong policy from ordinary binary64 scoring. At dimensions 48 and 64, interval verification is 1.35x and 1.44x faster than exact policy-only inverse maintenance over the full lifecycle; it loses at dimensions 8–32. **This is a bounded fixed-feature breakthrough, not confirmed publication novelty, privacy unlearning, or a neural-RL result. GPU experiments have not started.**
+**Checkpoint 10 external-validity gate in progress.** Checkpoint 09 established exact policy-sequence certification and a descriptive high-dimensional crossover. Separate Python-allocation measurement and explicit independent-seed versus same-dataset timing semantics are now implemented and pass 127 tests. A clean repeated dimension-48/64 archive is next, followed by a nontrivial frozen offline-RL feature bridge. **No neural-RL, privacy-unlearning, universal-speedup, or publication-novelty claim is established, and GPU experiments have not started.**
 
 ## Stage tracker
 
@@ -15,12 +15,13 @@ Last updated: 2026-10-25. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
 | Baselines and cost ledger | Lean global and classical elimination checkpoint complete | 4,158 further method executions / 108 runs; full lifecycle and scratch costs charged; external optimized FTVI is not reproduced |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
-| Frozen-feature LSPI control | Verified numerical replay breakthrough | Checkpoint 09 certifies exact policy sequences after deletion, catches a silent binary64 policy failure, and crosses the exact-inverse lifecycle at dimensions 48/64; external-validity gate remains |
+| Frozen-feature LSPI control | External-validity gate in progress | Checkpoint 09 certifies exact policy sequences and crosses the exact-inverse lifecycle at dimensions 48/64; repeated high-dimensional timing/allocation archive and nontrivial offline-data bridge remain |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
 
+- **27 October measurement implementation:** 127 local tests pass. The verified-float runner now performs allocation tracing separately from timed runs, excludes pre-generated input storage, and includes construction, initial replay, verifier/fallback state, and all sequential requests. A two-case smoke pass has zero mismatches; its allocation values are implementation validation, not checkpoint evidence. Independent seeds regenerate datasets; timing repeats reuse one generated dataset.
 - **25 October: Checkpoint 09 complete.** 126 local tests; 20 clean runs, 128 sequential requests, 504 executions, zero policy-sequence mismatches. Standard source `3302a1871a80a1119f10b7952b2ee28646ec6811`, crossover source `41a9dbaad24afb4e0c80b200f7e6da1eae86d492`, high-dimensional source `2655d88c414eb54b9ffc285e556bba68a41e1052`. [Report](checkpoints/09_verified_numerical_replay.md), [proof/prior art](audits/verified_float_lspi.md).
 - The interval verifier loses to exact inverse maintenance at dimensions 8–32, then wins on every high-dimensional seed. Median lifecycle speedups are 1.35x at dimension 48 and 1.44x at dimension 64; all eight high-dimensional requests certify without fallback. Ordinary binary64 scoring returns a wrong three-iteration policy sequence in the adversarial regression; the rational verifier certifies the correct sequence and the interval path rejects the unsafe decision and falls back exactly. Two seeds and one timing execution per dataset are descriptive evidence, not significance estimates or a publication-novelty claim.
 

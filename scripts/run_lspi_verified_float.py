@@ -1,6 +1,7 @@
 """Benchmark verified binary64 LSPI replay against exact policy controls."""
 
 import argparse
+import gc
 from datetime import datetime, timezone
 from fractions import Fraction as F
 import gzip
@@ -12,6 +13,7 @@ import random
 from statistics import median
 import sys
 from time import perf_counter
+import tracemalloc
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -145,6 +147,55 @@ def run(case, seed, repeat, requests, methods=METHODS):
     }
 
 
+def memory_pass(case, method, requests):
+    """Measure Python allocations separately from the timed benchmark pass.
+
+    The generated problem, trajectory logs, and deletion batches are deliberately
+    allocated before tracing starts.  The measurement therefore covers method
+    construction, initial replay, verifier/fallback state, and sequential request
+    handling, but not input storage or process RSS.
+    """
+    problem, logs, batches = dataset(*case, 0, requests=requests)
+    gc.collect()
+    tracemalloc.start()
+    try:
+        state, result = initialize(method, problem, logs)
+        retained = logs
+        current, lifecycle_peak = tracemalloc.get_traced_memory()
+        max_request_increment = 0
+        for batch in batches:
+            del result
+            before, _ = tracemalloc.get_traced_memory()
+            tracemalloc.reset_peak()
+            if method == "scratch_retrain":
+                removed = set(batch)
+                candidate = tuple(
+                    item for item in retained
+                    if item.trajectory_id not in removed
+                )
+                result = scratch_lspi(problem, candidate)
+                if result.status != "singular":
+                    retained = candidate
+            else:
+                result = state.delete_and_replay(batch)
+            current, peak = tracemalloc.get_traced_memory()
+            lifecycle_peak = max(lifecycle_peak, peak)
+            max_request_increment = max(max_request_increment, peak - before)
+        return {
+            "regime": case[0],
+            "states": case[1],
+            "dimension": case[2],
+            "actions": case[3],
+            "method": method,
+            "requests": len(batches),
+            "lifecycle_peak_python_bytes": lifecycle_peak,
+            "end_python_bytes": current,
+            "max_request_increment_python_bytes": max_request_increment,
+        }
+    finally:
+        tracemalloc.stop()
+
+
 def summarize(report):
     runs = report["runs"]
     methods = tuple(report["methods"])
@@ -213,6 +264,32 @@ def summarize(report):
                 f"{sum(item['used_fallback'] for item in records)} | "
                 f"{max(defects, default=0):.3e} |"
             )
+    memory = report.get("memory", [])
+    if memory:
+        lines += [
+            "",
+            "## Python allocation measurements",
+            "",
+            "These are separate `tracemalloc` passes. Input problems, trajectory logs, and deletion batches are allocated before tracing and excluded. Peaks include method construction, initial replay, verification or fallback state, and all sequential requests. They are Python allocations, not process RSS or accelerator memory.",
+            "",
+            "| Regime | States | Dimension | Method | Lifecycle peak MiB | End MiB | Maximum request increment MiB |",
+            "| --- | ---: | ---: | --- | ---: | ---: | ---: |",
+        ]
+        for item in sorted(
+            memory,
+            key=lambda value: (
+                value["regime"], value["states"], value["dimension"],
+                value["method"],
+            ),
+        ):
+            mib = 1024 * 1024
+            lines.append(
+                f"| {item['regime']} | {item['states']} | {item['dimension']} | "
+                f"{item['method']} | "
+                f"{item['lifecycle_peak_python_bytes'] / mib:.3f} | "
+                f"{item['end_python_bytes'] / mib:.3f} | "
+                f"{item['max_request_increment_python_bytes'] / mib:.3f} |"
+            )
     lines += [
         "",
         "## Interpretation limits",
@@ -220,6 +297,7 @@ def summarize(report):
         "- The certificate proves equality of the finite LSPI policy sequence, not equality of floating weights or a full matrix trace.",
         "- The rational verifier treats computed binary64 numbers as exact dyadic rationals. The interval verifier instead encloses every conversion, product, and sum with directed `nextafter` expansion. Both apply the same inverse-defect theorem; inconclusive cases use exact replay.",
         "- The rational verifier performs exact matrix products; the interval verifier performs cubic outward-rounded binary64 products. Any speed result is measured rather than inferred.",
+        "- Different seeds regenerate independent datasets. Repeats for one seed time the same generated dataset with independently shuffled method order; they are timing repeats, not additional dataset samples.",
         "- These synthetic fixed-feature tasks do not establish neural-RL unlearning, privacy, historical-state erasure, universal speedup, or publication novelty.",
     ]
     return "\n".join(lines)
@@ -238,6 +316,14 @@ def main():
     parser.add_argument(
         "--highdim", action="store_true",
         help="run fragile dimensions 48 and 64 with the lean strong-baseline matrix",
+    )
+    parser.add_argument(
+        "--memory", action="store_true",
+        help="run separate Python-allocation passes outside timed runs",
+    )
+    parser.add_argument(
+        "--memory-methods", nargs="+", choices=METHODS,
+        help="methods to include in memory passes (default: every selected method)",
     )
     parser.add_argument("--output", type=Path,
                         default=ROOT / "results/lspi_verified_float.json.gz")
@@ -258,6 +344,13 @@ def main():
             else CASES
         )
         methods = HIGH_DIM_METHODS if args.highdim else METHODS
+        memory_methods = tuple(args.memory_methods or methods)
+        unavailable = set(memory_methods) - set(methods)
+        if args.memory and unavailable:
+            parser.error(
+                "memory methods must be selected benchmark methods: "
+                + ", ".join(sorted(unavailable))
+            )
         report = {
             "created_at": datetime.now(timezone.utc).isoformat(),
             "git_commit": git("rev-parse", "HEAD"),
@@ -268,6 +361,7 @@ def main():
                           for key, value in vars(args).items()},
             "methods": methods,
             "runs": [],
+            "memory": [],
             "source_sha256": {
                 str(file.relative_to(ROOT)): hashlib.sha256(file.read_bytes()).hexdigest()
                 for file in sorted((ROOT / "src").rglob("*.py"))
@@ -281,6 +375,13 @@ def main():
                         run(case, seed, repeat, args.requests, methods=methods)
                     )
                     print(f"{case} seed={seed} repeat={repeat}: done", flush=True)
+        if args.memory:
+            for case in cases:
+                for method in memory_methods:
+                    report["memory"].append(
+                        memory_pass(case, method, args.requests)
+                    )
+                    print(f"memory {case} method={method}: done", flush=True)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_bytes(
             gzip.compress(json.dumps(report, indent=2).encode(), mtime=0)

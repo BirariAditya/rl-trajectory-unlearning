@@ -20,7 +20,7 @@ from rl_unlearning.lspi_baselines import LSPICachedState
 from rl_unlearning.lspi_control import _outer_add
 from test_lspi_control import episode, switch_fixture
 from run_lspi_multiaction import CASES
-from run_lspi_verified_float import METHODS, run, summarize
+from run_lspi_verified_float import METHODS, memory_pass, run, summarize
 
 
 class VerifiedFloatTests(unittest.TestCase):
@@ -265,6 +265,27 @@ class VerifiedFloatTests(unittest.TestCase):
         text = summarize(report)
         self.assertIn("8 executions; 0 mismatches", text)
         self.assertIn("2 / 2", text)
+
+    def test_memory_pass_is_separate_and_summary_states_scope(self):
+        measurement = memory_pass(CASES[0], "verified_interval", 1)
+        self.assertEqual(measurement["method"], "verified_interval")
+        self.assertEqual(measurement["requests"], 1)
+        self.assertGreater(measurement["lifecycle_peak_python_bytes"], 0)
+        self.assertGreaterEqual(
+            measurement["lifecycle_peak_python_bytes"],
+            measurement["end_python_bytes"],
+        )
+        report = {
+            "runs": [run(CASES[0], 0, 0, 1)],
+            "git_commit": "test",
+            "git_dirty": True,
+            "methods": METHODS,
+            "memory": [measurement],
+        }
+        text = summarize(report)
+        self.assertIn("Python allocation measurements", text)
+        self.assertIn("not process RSS or accelerator memory", text)
+        self.assertIn("timing repeats, not additional dataset samples", text)
 
 
 if __name__ == "__main__":
