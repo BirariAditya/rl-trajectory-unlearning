@@ -121,6 +121,7 @@ class FrozenBridgeTests(unittest.TestCase):
         text = summarize(report)
         self.assertIn("Preprocessing is charged", text)
         self.assertIn("0 policy-sequence mismatches", text)
+        self.assertIn("deletions change the final retained-only policy", text)
 
 
 if __name__ == "__main__":

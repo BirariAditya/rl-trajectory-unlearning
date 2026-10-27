@@ -113,6 +113,13 @@ def summarize(report):
         not item["policy_sequence_match"]
         for request in requests for item in request["methods"].values()
     )
+    changed_policies = 0
+    for run in runs:
+        previous = run["preparation"]["scratch_retrain"]["policy_sha256"]
+        for request in run["requests"]:
+            current = request["methods"]["scratch_retrain"]["policy_sha256"]
+            changed_policies += current != previous
+            previous = current
     lines = [
         "# Minari FourRooms frozen-feature deletion bridge",
         "",
@@ -120,7 +127,7 @@ def summarize(report):
         "",
         f"Dataset `{report['dataset']['id']}`: {report['dataset']['total_episodes']} episodes / {report['dataset']['total_steps']} transitions in the source; local load took {report['dataset']['load_seconds']:.3f} seconds.",
         "",
-        f"**{len(runs)} disjoint windows, {len(requests)} deletion requests, {len(requests) * len(METHODS)} request executions; {mismatches} policy-sequence mismatches.**",
+        f"**{len(runs)} disjoint windows, {len(requests)} deletion requests, {len(requests) * len(METHODS)} request executions; {mismatches} policy-sequence mismatches; {changed_policies} / {len(requests)} deletions change the final retained-only policy.**",
         "",
         "The state dictionary and frozen features are constructed once from each original pre-deletion window and never rebuilt after a request. Preprocessing is charged in every end-to-end method column. Remote download time is excluded; local load time is reported separately.",
         "",
