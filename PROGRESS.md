@@ -4,7 +4,7 @@ Last updated: 2026-10-27. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 
 ## Current stage
 
-**Checkpoint 10 external-validity gate in progress.** [Checkpoint 10A](checkpoints/10a_repeated_highdim_allocations.md) has 127 passing tests and a clean three-seed dimension-48/64 archive: 36 executions, zero policy-sequence mismatches, and all 12 deletion requests certified without fallback. Interval verification has 1.10x and 1.34x median lifecycle gains over exact inverse maintenance and 3.83x and 4.91x lower traced peak Python allocation, but it loses on two of six individual datasets. A nontrivial frozen offline-RL feature bridge and paired retiming remain. **No neural-RL, privacy-unlearning, universal-speedup, or publication-novelty claim is established, and GPU experiments have not started.**
+**Checkpoint 10 external-validity gate in progress.** [Checkpoint 10A](checkpoints/10a_repeated_highdim_allocations.md) preserves exact policy sequences and shows lower median time/peak allocation, but two of six datasets lose on lifecycle time. The CPU bridge to the official Minari FourRooms dataset is now implemented and passes 132 tests using deterministic frozen observation-action features, complete-episode deletion, scratch retraining, exact inverse maintenance, and verified interval replay. Its clean disjoint-window experiment is next. **No neural-RL, privacy-unlearning, universal-speedup, or publication-novelty claim is established, and GPU experiments have not started.**
 
 ## Stage tracker
 
@@ -15,12 +15,13 @@ Last updated: 2026-10-27. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 | Independent retained-data reference | Implemented and tested | Exact rational policy enumeration for tiny MDPs, independently aggregated from logs; 20 random-model comparisons |
 | Baselines and cost ledger | Lean global and classical elimination checkpoint complete | 4,158 further method executions / 108 runs; full lifecycle and scratch costs charged; external optimized FTVI is not reproduced |
 | Sparse decision certificate | Exact block repair and safe pruning implemented | Chosen-action changes, cyclic/sequential requests, exact ties, index repair, anchor invalidation; mature-planner novelty and general margin envelope remain open |
-| Frozen-feature LSPI control | External-validity gate in progress | Checkpoint 10A adds three-seed timing and allocation evidence; the median crossover survives but two datasets lose, and a nontrivial offline-data bridge remains |
+| Frozen-feature LSPI control | External-validity gate in progress | Checkpoint 10A adds timing/allocation evidence; Minari FourRooms adapter and cost-complete runner pass 132 tests; clean disjoint-window archive remains |
 | GPU IQL pilot | Not started | Dataset/learner identity, multiple retrains, strong fine-tune, matched controls, multi-attack audit |
 | Full experiments and manuscript | Not started | Pass prior gates before expanding |
 
 ## Latest validation
 
+- **27 October external-data candidate:** the standard-library adapter consumes Minari `EpisodeData`, validates complete episodes, freezes a deterministic image/direction/action representation before deletion, and preserves terminal masks. Five focused tests cover canonical encoding, feature determinism, schema rejection, retained-only verification, and runner accounting; all 132 repository tests pass. An 8-episode real-data smoke run has zero mismatches and certifies its deletion without fallback. [Contract](audits/minari_frozen_bridge.md). The smoke was launched from a dirty implementation tree and is not checkpoint evidence.
 - **27 October: Checkpoint 10A archived.** Clean source `7cf2a1989e4eaebde8522a16168de8c016d5a31a`; 6 independent runs, 12 requests, 36 executions, zero mismatches, and no fallback. Median exact-inverse / interval-verifier lifecycle ratios are 1.10x at dimension 48 and 1.34x at dimension 64, but seed-wise ratios include losses of 0.46x and 0.92x. Separate seed-0 allocation passes show 3.83x and 4.91x lower peak Python allocation. [Report](checkpoints/10a_repeated_highdim_allocations.md), [tables](output/benchmarks/lspi_verified_highdim_repeated_summary.md), [archive](output/benchmarks/lspi_verified_highdim_repeated.json.gz).
 - **27 October measurement implementation:** 127 local tests pass. The verified-float runner now performs allocation tracing separately from timed runs, excludes pre-generated input storage, and includes construction, initial replay, verifier/fallback state, and all sequential requests. A two-case smoke pass has zero mismatches; its allocation values are implementation validation, not checkpoint evidence. Independent seeds regenerate datasets; timing repeats reuse one generated dataset.
 - **25 October: Checkpoint 09 complete.** 126 local tests; 20 clean runs, 128 sequential requests, 504 executions, zero policy-sequence mismatches. Standard source `3302a1871a80a1119f10b7952b2ee28646ec6811`, crossover source `41a9dbaad24afb4e0c80b200f7e6da1eae86d492`, high-dimensional source `2655d88c414eb54b9ffc285e556bba68a41e1052`. [Report](checkpoints/09_verified_numerical_replay.md), [proof/prior art](audits/verified_float_lspi.md).
@@ -87,7 +88,7 @@ Last updated: 2026-10-27. Repository: [BirariAditya/rl-trajectory-unlearning](ht
 ## Next implementation tasks
 
 1. Use the [18 October preparation plan](presentation/2026-10-18/README.md) to study the equations, reproduce the demos, and rehearse all completed checkpoints. Explain the new policy-only contract before its timing results.
-2. Checkpoint 10A adds repeated high-dimensional timing and allocation evidence, but two of six datasets lose. Add paired retiming to separate system tails from dataset difficulty, then test frozen features from a nontrivial offline-RL dataset. Keep all setup, verification, failed fast-path, memory and fallback costs.
+2. Run the clean Minari FourRooms disjoint-window archive with feature construction charged, then add paired retiming to separate system tails from dataset difficulty. Keep all setup, verification, failed fast-path, memory and fallback costs.
 3. State and audit a deletion-specific theorem or advantage beyond established incremental LSPI before neural scale-up. If no such claim survives, reframe as a failure/evaluation study. User-identity batches, larger real tasks and GPU experiments remain staged.
 
 ## Limitations and open decisions

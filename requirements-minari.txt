@@ -1,0 +1,3 @@
+# Optional dependencies for the external offline-RL dataset bridge.
+minari[hf]==0.5.4
+pillow==13.0.0

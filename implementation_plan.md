@@ -13,6 +13,13 @@ retained-only contract must next be tested on frozen features derived from a
 nontrivial offline-RL dataset. Neural feature extraction and IQL remain the
 first GPU-requiring stage and must not begin before the CPU bridge validates.
 
+The CPU bridge is now implemented against the official Minari FourRooms expert
+dataset. A deterministic hashed image/direction/action representation is frozen
+before deletion; complete episodes are the deletion units. The runner records
+dataset and source hashes, charges feature construction, and compares scratch,
+exact inverse, and interval-verified replay. All 132 tests and a real-data smoke
+pass succeed. A clean three-window archive is the remaining CPU acceptance gate.
+
 **25 October completed numerical gate:** [Checkpoint 09](checkpoints/09_verified_numerical_replay.md)
 adds exact-rational and outward-rounded verification of binary64 LSPI deletion
 replay. The complete finite policy sequence matches direct retained-only LSPI

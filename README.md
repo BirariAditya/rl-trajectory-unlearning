@@ -1,6 +1,6 @@
 # RL trajectory unlearning research
 
-**Current stage: Checkpoint 10 external-validity gate in progress.** [Checkpoint 10A](checkpoints/10a_repeated_highdim_allocations.md) has 127 passing tests and a clean three-seed dimension-48/64 archive: 36 executions, zero policy-sequence mismatches, and all 12 deletion requests certified without fallback. Interval verification has 1.10x and 1.34x median lifecycle gains over exact inverse maintenance and 3.83x and 4.91x lower traced peak Python allocation, but it loses on two of six individual datasets. A nontrivial frozen offline-RL feature bridge and paired retiming remain. **No neural-RL, privacy-unlearning, universal-speedup, or publication-novelty claim is established, and GPU experiments have not started.**
+**Current stage: Checkpoint 10 external-validity gate in progress.** [Checkpoint 10A](checkpoints/10a_repeated_highdim_allocations.md) preserves exact policy sequences and shows lower median time/peak allocation, but two of six datasets lose on lifecycle time. The CPU bridge to the official Minari FourRooms dataset is now implemented and passes 132 tests using deterministic frozen observation-action features, complete-episode deletion, scratch retraining, exact inverse maintenance, and verified interval replay. Its clean disjoint-window experiment is next. **No neural-RL, privacy-unlearning, universal-speedup, or publication-novelty claim is established, and GPU experiments have not started.**
 
 For the comprehensive 18 October presentation, start with the [learning guide](docs/LEARNING_GUIDE.md), [33-slide outline and speaker notes](presentation/2026-10-18/TALK_TRACK.md), and [preparation plan](presentation/2026-10-18/README.md).
 
@@ -31,6 +31,13 @@ python scripts/run_lspi_verified_float.py --seeds 0 1 --repeats 1 --requests 10 
 python scripts/run_lspi_verified_float.py --crossover --seeds 0 1 --repeats 1 --requests 5 --output results/lspi_verified_crossover.json.gz --summary results/lspi_verified_crossover_summary.md
 python scripts/run_lspi_verified_float.py --highdim --seeds 0 1 --repeats 1 --requests 2 --output results/lspi_verified_highdim.json.gz --summary results/lspi_verified_highdim_summary.md
 python scripts/run_lspi_verified_float.py --highdim --seeds 0 1 2 --repeats 1 --requests 2 --memory --memory-methods inverse_policy verified_interval --output results/lspi_verified_highdim_repeated.json.gz --summary results/lspi_verified_highdim_repeated_summary.md
+
+uv venv .venv-minari --python 3.11
+uv pip install --python .venv-minari\Scripts\python.exe -r requirements-minari.txt
+$env:MINARI_DATASETS_PATH=(Resolve-Path results).Path + '\minari'
+$env:PYTHONUTF8='1'
+.\.venv-minari\Scripts\minari.exe download D4RL/minigrid/fourrooms-v0
+.\.venv-minari\Scripts\python.exe scripts/run_minari_frozen_bridge.py --windows 0 1 2 --episodes 64 --requests 3 --dimension 24 --output results/minari_frozen_bridge.json.gz --summary results/minari_frozen_bridge_summary.md
 ```
 
 The package is at `src/rl_unlearning`. It currently uses only the Python standard library. `delete_and_repair` removes specified trajectories, tries local Bellman backups, checks the retained-model residual and action gaps, and falls back to full warm-started value iteration when it cannot certify the policy. The returned `RepairResult` reports local backups and full residual checks separately.
@@ -89,3 +96,11 @@ initial replay, verifier/fallback state, and sequential requests are included.
 These values are Python allocations rather than process RSS or accelerator
 memory. Different seeds are independent datasets, whereas `--repeats` re-times
 one generated dataset with a newly randomized method order.
+
+`build_minigrid_frozen_lspi` provides the external-data CPU bridge. It encodes
+the official Minari FourRooms image/direction observations with a deterministic
+seed-fixed feature hash and explicit action indicators. The state dictionary
+and features are frozen before deletion; direct retained-only scratch LSPI is
+still the reference. Minari is an optional ingestion dependency isolated in
+`requirements-minari.txt`; the core learner remains standard-library-only. See
+the [bridge contract and limits](audits/minari_frozen_bridge.md).
